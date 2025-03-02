@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FENDER BENDER DEFENDER - Mike Brown Law</title>
+    <!-- Updated version with fixed black viewer strip and improved building details -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @font-face {
@@ -1279,7 +1280,6 @@
                         const window2 = new THREE.Mesh(windowGeometry, windowMaterial);
                         window2.position.set(-width/2 - 0.01, wy, wz);
                         window2.rotation.y = Math.PI / 2;
-                        window2.castShadow = false;
                         buildingGroup.add(window2);
                     }
                 }
