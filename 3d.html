@@ -74,11 +74,19 @@
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
             background-color: #222;
             overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            height: 0;
+            padding-bottom: 56.25%;
         }
 
         canvas {
             display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
             background-color: #222;
         }
 
@@ -130,18 +138,40 @@
             border-top: 2px solid #333;
         }
 
-        .decision-screen {
+        .game-menu, .decision-screen, .win-screen, .lose-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            z-index: 12;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-menu {
+            background-color: rgba(0,0,40,0.85);
+            display: flex; /* This one starts visible */
+        }
+
+        .decision-screen {
+            background-color: rgba(0, 0, 0, 0.8);
             z-index: 10;
+        }
+
+        .win-screen {
+            background-color: rgba(0, 100, 0, 0.9);
+            z-index: 11;
+        }
+
+        .lose-screen {
+            background-color: rgba(100, 0, 0, 0.9);
+            z-index: 11;
         }
 
         .decision-title {
@@ -158,30 +188,6 @@
             width: 100%;
         }
 
-        .win-screen, .lose-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 11;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .win-screen {
-            background-color: rgba(0, 100, 0, 0.9);
-        }
-
-        .lose-screen {
-            background-color: rgba(100, 0, 0, 0.9);
-        }
-
         .win-title, .lose-title {
             font-size: 28px;
             margin-bottom: 20px;
@@ -195,20 +201,6 @@
         .lose-title {
             color: #f44;
             text-shadow: 2px 2px 0 #000;
-        }
-
-        .game-menu {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,40,0.85);
-            z-index: 12;
         }
 
         .menu-logo {
@@ -326,7 +318,7 @@
                 </div>
             </div>
             
-            <canvas id="game-canvas" width="800" height="500"></canvas>
+            <canvas id="game-canvas"></canvas>
             
             <div class="scanlines"></div>
             <div class="crt-effect"></div>
@@ -400,6 +392,8 @@
             gameActive = true;
             gameMenu.style.display = 'none';
             lastTailgaterTime = Date.now();
+            // Ensure canvas is properly sized when game starts
+            resizeCanvas();
             // Start the game immediately
         }
 
@@ -437,6 +431,9 @@
             for (let i = 0; i < 20; i++) {
                 spawnTrafficCar(20 + i * 20);
             }
+            
+            // Ensure canvas is properly sized
+            resizeCanvas();
         }
 
         function toggleSound() {
@@ -527,9 +524,33 @@
         };
         createSkybox();
 
-        const camera = new THREE.PerspectiveCamera(75, 800 / 500, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000); // Initial aspect ratio will be updated
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
-        renderer.setSize(800, 500);
+        
+        // Function to handle responsive canvas
+        function resizeCanvas() {
+            const canvas = renderer.domElement;
+            const gameContainer = document.querySelector('.game-container');
+            
+            // Get the computed dimensions of the container
+            const containerRect = gameContainer.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
+            
+            // Update renderer size to match container
+            renderer.setSize(containerWidth, containerHeight, false);
+            
+            // Update camera aspect ratio
+            camera.aspect = containerWidth / containerHeight;
+            camera.updateProjectionMatrix();
+        }
+        
+        // Initial resize
+        resizeCanvas();
+        
+        // Add window resize event listener
+        window.addEventListener('resize', resizeCanvas);
+        
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -1627,6 +1648,15 @@
             const delta = (timestamp - lastTime) / 1000;
             lastTime = timestamp;
             requestAnimationFrame(animate);
+
+            // Check if canvas size needs to be updated
+            const canvas = renderer.domElement;
+            const gameContainer = document.querySelector('.game-container');
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            if (canvas.width !== containerRect.width || canvas.height !== containerRect.height) {
+                resizeCanvas();
+            }
 
             if (!gameActive) {
                 // Even when game is not active, render the scene
