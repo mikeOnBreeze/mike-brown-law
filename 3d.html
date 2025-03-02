@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FENDER BENDER DEFENDER - Mike Brown Law</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'PixelFont';
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/press-start-2p/0.93/PressStart2P-Regular.woff') format('woff');
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #000;
+            font-family: 'PixelFont', monospace;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .genesis-header {
+            background: linear-gradient(to right, #0a0240, #2a0d99, #4016d0);
+            border-bottom: 4px solid #fff;
+            padding: 20px 0;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .genesis-header h1 {
+            color: #ffd700;
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 4px 4px 0px #f00, 
+                         -4px -4px 0px #00f;
+            letter-spacing: 2px;
+            position: relative;
+        }
+
+        .genesis-header .shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(to right, 
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.8) 50%,
+                rgba(255,255,255,0) 100%);
+            animation: shine 3s infinite;
+            transform: skewX(-20deg);
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        .game-container {
+            margin: 20px auto;
+            position: relative;
+            border: 8px solid #333;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            background-color: #222;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            background-color: #222;
+        }
+
+        .controls {
+            background-color: #222;
+            border: 4px solid #444;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #0f0;
+            border-radius: 4px;
+        }
+
+        .sega-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(to bottom, #ff0000, #aa0000);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: 'PixelFont', monospace;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            text-align: center;
+            box-shadow: 0 4px 0 #880000;
+            text-transform: uppercase;
+            transition: all 0.1s;
+        }
+
+        .sega-button:hover {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #880000;
+        }
+
+        .sega-button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 0.7em;
+            color: #888;
+            border-top: 2px solid #333;
+        }
+
+        .decision-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .decision-title {
+            color: #ff0;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 2px 2px 0 #f00;
+        }
+
+        .decision-options {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .win-screen, .lose-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 11;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .win-screen {
+            background-color: rgba(0, 100, 0, 0.9);
+        }
+
+        .lose-screen {
+            background-color: rgba(100, 0, 0, 0.9);
+        }
+
+        .win-title, .lose-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .win-title {
+            color: gold;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .lose-title {
+            color: #f44;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .game-menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,40,0.85);
+            z-index: 12;
+        }
+
+        .menu-logo {
+            margin-bottom: 40px;
+        }
+
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.1) 50%,
+                rgba(0, 0, 0, 0.1) 100%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .crt-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 14;
+            box-shadow: inset 0 0 100px rgba(0, 30, 60, 0.5);
+            border-radius: 10px;
+        }
+
+        .pixelated-car {
+            image-rendering: pixelated;
+            width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .denied-stamp {
+            color: red;
+            font-size: 48px;
+            font-weight: bold;
+            border: 5px solid red;
+            padding: 5px 15px;
+            transform: rotate(-15deg);
+            margin: 20px;
+        }
+
+        .gold-check {
+            font-size: 24px;
+            color: gold;
+            border: 3px solid gold;
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            margin: 20px;
+        }
+
+        .call-button {
+            background: linear-gradient(to bottom, #ffd700, #b8860b);
+            color: #000;
+            padding: 15px 30px;
+            font-size: 20px;
+            margin-top: 30px;
+            box-shadow: 0 6px 0 #8b6914;
+        }
+
+        .retry-button {
+            background: linear-gradient(to bottom, #4444ff, #2222aa);
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+
+        .game-title-animation {
+            font-size: 36px;
+            color: yellow;
+            text-shadow: 4px 4px 0 #f00;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="genesis-header">
+        <div class="shine"></div>
+        <h1>FENDER BENDER DEFENDER</h1>
+        <div style="color: #0f0; margin-top: 5px; font-size: 18px;">MIKE BROWN LAW PRESENTS</div>
+    </div>
+
+    <div class="container">
+        <div class="game-container">
+            <div class="game-menu">
+                <div class="game-title-animation">FENDER BENDER DEFENDER</div>
+                <div class="menu-logo">
+                    <img src="https://placehold.co/150x75" alt="Car Logo" class="pixelated-car">
+                </div>
+                <div class="menu-options">
+                    <button id="start-game" class="sega-button">START GAME</button>
+                    <button id="how-to-play" class="sega-button">HOW TO PLAY</button>
+                </div>
+            </div>
+            
+            <canvas id="game-canvas" width="800" height="500"></canvas>
+            
+            <div class="scanlines"></div>
+            <div class="crt-effect"></div>
+            
+            <div class="decision-screen">
+                <div class="decision-title">YOU'VE BEEN REAR-ENDED!</div>
+                <div class="decision-options">
+                    <button id="call-lawyer" class="sega-button">CALL MIKE BROWN LAW</button>
+                    <button id="self-handle" class="sega-button">HANDLE IT YOURSELF</button>
+                </div>
+            </div>
+            
+            <div class="win-screen">
+                <div class="win-title">CONGRATULATIONS!</div>
+                <div class="gold-check">$25,000 SETTLEMENT</div>
+                <div>Your case was handled by PROFESSIONALS!</div>
+                <div style="margin-top: 20px;">Fender Bender? Get PAID!</div>
+                <button id="call-now" class="sega-button call-button">CALL MIKE BROWN LAW</button>
+                <button id="play-again-win" class="sega-button retry-button">PLAY AGAIN</button>
+            </div>
+            
+            <div class="lose-screen">
+                <div class="lose-title">CLAIM REJECTED</div>
+                <div class="denied-stamp">DENIED</div>
+                <div>Insurance companies WIN when you don't have a lawyer!</div>
+                <div style="margin-top: 20px; color: #f88;">Don't get screwed - get legal help!</div>
+                <button id="call-after-loss" class="sega-button call-button">CALL MIKE BROWN LAW</button>
+                <button id="play-again-lose" class="sega-button retry-button">TRY AGAIN</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <p>CONTROLS: ← → ARROW KEYS TO MOVE • UP ARROW TO ACCELERATE • DOWN ARROW TO BRAKE</p>
+            <div>
+                <button id="toggle-fullscreen" class="sega-button">FULLSCREEN</button>
+                <button id="toggle-sound" class="sega-button">SOUND: ON</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2025 MIKE BROWN LAW - THIS GAME IS PROVIDED FOR ENTERTAINMENT PURPOSES ONLY AND IS NOT LEGAL ADVICE
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameActive = false;
+        let soundOn = true;
+        const gameMenu = document.querySelector('.game-menu');
+        const canvas = document.getElementById('game-canvas');
+        const decisionScreen = document.querySelector('.decision-screen');
+        const winScreen = document.querySelector('.win-screen');
+        const loseScreen = document.querySelector('.lose-screen');
+
+        // Variables for tailgater timing and delta time
+        let lastTailgaterTime = 0;
+        const tailgaterInterval = 5000; // 5 seconds (half of original 10 seconds)
+        let lastTime = 0;
+
+        // Button event listeners
+        document.getElementById('start-game').addEventListener('click', startGame);
+        document.getElementById('how-to-play').addEventListener('click', showHowToPlay);
+        document.getElementById('call-lawyer').addEventListener('click', () => showWinScreen());
+        document.getElementById('self-handle').addEventListener('click', () => showLoseScreen());
+        document.getElementById('play-again-win').addEventListener('click', resetGame);
+        document.getElementById('play-again-lose').addEventListener('click', resetGame);
+        document.getElementById('toggle-sound').addEventListener('click', toggleSound);
+        document.getElementById('toggle-fullscreen').addEventListener('click', toggleFullscreen);
+
+        function startGame() {
+            gameActive = true;
+            gameMenu.style.display = 'none';
+            lastTailgaterTime = Date.now();
+            // Start the game immediately
+        }
+
+        function showHowToPlay() {
+            alert('Use arrow keys to drive. Avoid other cars. If you crash, you\'ll need to decide whether to call Mike Brown Law or handle it yourself!');
+        }
+
+        function showDecisionScreen() {
+            decisionScreen.style.display = 'flex';
+        }
+
+        function showWinScreen() {
+            decisionScreen.style.display = 'none';
+            winScreen.style.display = 'flex';
+        }
+
+        function showLoseScreen() {
+            decisionScreen.style.display = 'none';
+            loseScreen.style.display = 'flex';
+        }
+
+        function resetGame() {
+            winScreen.style.display = 'none';
+            loseScreen.style.display = 'none';
+            gameMenu.style.display = 'flex';
+            gameActive = false;
+
+            // Reset player position and speed
+            player.position.set(0, 0.25, 0);
+            playerSpeed = 0;
+
+            // Reset traffic cars
+            trafficCars.forEach(car => scene.remove(car.mesh));
+            trafficCars.length = 0;
+            for (let i = 0; i < 20; i++) {
+                spawnTrafficCar(20 + i * 20);
+            }
+        }
+
+        function toggleSound() {
+            soundOn = !soundOn;
+            document.getElementById('toggle-sound').textContent = soundOn ? 'SOUND: ON' : 'SOUND: OFF';
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Three.js setup
+        const scene = new THREE.Scene();
+        // Replace simple background with skybox
+        const createSkybox = () => {
+            // Create a gradient sky instead of using CubeTexture
+            const vertexShader = `
+                varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `;
+            
+            const fragmentShader = `
+                uniform vec3 topColor;
+                uniform vec3 bottomColor;
+                uniform float offset;
+                uniform float exponent;
+                varying vec3 vWorldPosition;
+                void main() {
+                    float h = normalize(vWorldPosition + offset).y;
+                    gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
+                }
+            `;
+            
+            // Create shader material with California sunset colors
+            const uniforms = {
+                topColor: { value: new THREE.Color(0x1E90FF) },  // Deep blue at top
+                bottomColor: { value: new THREE.Color(0xFF8C00) }, // Orange sunset at horizon
+                offset: { value: 10 },
+                exponent: { value: 0.6 }
+            };
+            
+            const skyGeo = new THREE.SphereGeometry(900, 32, 15);
+            const skyMat = new THREE.ShaderMaterial({
+                uniforms: uniforms,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                side: THREE.BackSide
+            });
+            
+            const sky = new THREE.Mesh(skyGeo, skyMat);
+            scene.add(sky);
+            
+            // Add a sun
+            const sunGeometry = new THREE.CircleGeometry(40, 32);
+            const sunMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffdd00,
+                transparent: true,
+                opacity: 0.8
+            });
+            const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+            sun.position.set(-200, 100, -500);
+            sun.lookAt(0, 0, 0);
+            scene.add(sun);
+            
+            // Add sun rays/glow
+            const glowGeometry = new THREE.CircleGeometry(60, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff8800,
+                transparent: true,
+                opacity: 0.4
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            glow.position.copy(sun.position);
+            glow.lookAt(0, 0, 0);
+            scene.add(glow);
+        };
+        createSkybox();
+
+        const camera = new THREE.PerspectiveCamera(75, 800 / 500, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
+        renderer.setSize(800, 500);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Add California sunset lighting
+        const ambientLight = new THREE.AmbientLight(0xffd580, 0.6); // Warm ambient light
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffb347, 1.0); // Orange-ish sunlight
+        directionalLight.position.set(-10, 15, 10);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -20;
+        directionalLight.shadow.camera.right = 20;
+        directionalLight.shadow.camera.top = 20;
+        directionalLight.shadow.camera.bottom = -20;
+        scene.add(directionalLight);
+
+        // Road
+        const roadGeometry = new THREE.PlaneGeometry(10, 10000);
+        const roadMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x333333,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const road = new THREE.Mesh(roadGeometry, roadMaterial);
+        road.rotation.x = -Math.PI / 2;
+        road.receiveShadow = true;
+        scene.add(road);
+
+        // Add road markings
+        const addRoadMarkings = () => {
+            for (let i = 0; i < 100; i++) {
+                const markingGeometry = new THREE.PlaneGeometry(0.2, 2);
+                const markingMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const marking = new THREE.Mesh(markingGeometry, markingMaterial);
+                marking.rotation.x = -Math.PI / 2;
+                marking.position.set(0, 0.01, i * 20);
+                scene.add(marking);
+            }
+        };
+        addRoadMarkings();
+
+        // Add beach sand on both sides of the road
+        const createBeachTerrain = () => {
+            // Left side (beach side)
+            const beachGeometry = new THREE.PlaneGeometry(100, 10000);
+            const beachMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xf2d2a9, // Sand color
+                roughness: 1.0,
+                metalness: 0.0
+            });
+            const leftBeach = new THREE.Mesh(beachGeometry, beachMaterial);
+            leftBeach.rotation.x = -Math.PI / 2;
+            leftBeach.position.set(-55, -0.1, 0);
+            leftBeach.receiveShadow = true;
+            scene.add(leftBeach);
+            
+            // Right side (mountain side)
+            const rightBeach = new THREE.Mesh(beachGeometry, beachMaterial);
+            rightBeach.rotation.x = -Math.PI / 2;
+            rightBeach.position.set(55, -0.1, 0);
+            rightBeach.receiveShadow = true;
+            scene.add(rightBeach);
+        };
+        createBeachTerrain();
+
+        // Add ocean
+        const createOcean = () => {
+            const oceanGeometry = new THREE.PlaneGeometry(1000, 10000);
+            const oceanMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0077be,
+                roughness: 0.1,
+                metalness: 0.8,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+            ocean.rotation.x = -Math.PI / 2;
+            ocean.position.set(-550, -0.5, 0);
+            scene.add(ocean);
+            
+            // Add some waves/foam at the shoreline
+            const foamGeometry = new THREE.PlaneGeometry(10, 10000);
+            const foamMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.7
+            });
+            const foam = new THREE.Mesh(foamGeometry, foamMaterial);
+            foam.rotation.x = -Math.PI / 2;
+            foam.position.set(-105, -0.05, 0);
+            scene.add(foam);
+            
+            // Create animated waves
+            const waveCount = 20;
+            const waves = [];
+            
+            for (let i = 0; i < waveCount; i++) {
+                const waveGeometry = new THREE.PlaneGeometry(80, 2);
+                const waveMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+                wave.rotation.x = -Math.PI / 2;
+                
+                // Position waves at different distances in the ocean
+                const distanceFromShore = 20 + i * 20;
+                wave.position.set(-105 - distanceFromShore, -0.2, 0);
+                
+                // Store animation parameters
+                wave.userData = {
+                    speed: 0.2 + Math.random() * 0.3,
+                    offset: Math.random() * Math.PI * 2
+                };
+                
+                scene.add(wave);
+                waves.push(wave);
+            }
+            
+            // Animation function for waves
+            const animateWaves = (time) => {
+                waves.forEach((wave, index) => {
+                    // Make waves move up and down slightly
+                    wave.position.y = -0.2 + Math.sin(time * wave.userData.speed + wave.userData.offset) * 0.1;
+                    
+                    // Make waves move forward slowly
+                    wave.position.z = (player.position.z + index * 500) % 10000 - 5000;
+                });
+            };
+            
+            return { animateWaves };
+        };
+        const ocean = createOcean();
+
+        // Add distant mountains
+        const createMountains = () => {
+            // Create a mountain range using a series of triangular prisms
+            for (let i = 0; i < 15; i++) {
+                const height = 20 + Math.random() * 30;
+                const width = 40 + Math.random() * 60;
+                
+                // Create a simple mountain shape
+                const mountainGeometry = new THREE.ConeGeometry(width, height, 4);
+                const mountainMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x8b4513, // Brown
+                    roughness: 1.0,
+                    metalness: 0.0
+                });
+                
+                const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
+                
+                // Position mountains on the right side, far away
+                const xPos = 150 + Math.random() * 100;
+                const zPos = i * 200 - 1000 + Math.random() * 200;
+                
+                mountain.position.set(xPos, height/2 - 5, zPos);
+                mountain.castShadow = true;
+                scene.add(mountain);
+            }
+        };
+        createMountains();
+
+        // Add billboards
+        const createBillboards = () => {
+            // Create a function to make a billboard
+            const makeBillboard = (text, x, z, rotation = 0) => {
+                // Billboard structure
+                const postGeometry = new THREE.BoxGeometry(0.5, 5, 0.5);
+                const postMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+                const post = new THREE.Mesh(postGeometry, postMaterial);
+                post.position.y = 2.5;
+                post.castShadow = true;
+                
+                const boardGeometry = new THREE.BoxGeometry(8, 4, 0.2);
+                const boardMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+                const board = new THREE.Mesh(boardGeometry, boardMaterial);
+                board.position.y = 6;
+                board.castShadow = true;
+                
+                // Create a canvas for the text
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 256;
+                const context = canvas.getContext('2d');
+                
+                // Fill with background color
+                context.fillStyle = '#4169E1'; // Royal blue
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Add a border
+                context.strokeStyle = '#FFD700'; // Gold
+                context.lineWidth = 10;
+                context.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+                
+                // Add text
+                context.fillStyle = '#FFFFFF';
+                context.font = 'bold 40px Arial';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                
+                // Split text into lines
+                const lines = text.split('\n');
+                const lineHeight = 50;
+                
+                lines.forEach((line, i) => {
+                    context.fillText(line, canvas.width / 2, canvas.height / 2 - ((lines.length - 1) * lineHeight / 2) + i * lineHeight);
+                });
+                
+                // Use the canvas as a texture
+                const texture = new THREE.CanvasTexture(canvas);
+                
+                // Create a billboard group
+                const billboard = new THREE.Group();
+                billboard.add(post);
+                billboard.add(board);
+                
+                // Add front text
+                const frontTextMaterial = new THREE.MeshBasicMaterial({ map: texture });
+                const frontTextGeometry = new THREE.PlaneGeometry(7.8, 3.8);
+                const frontTextMesh = new THREE.Mesh(frontTextGeometry, frontTextMaterial);
+                frontTextMesh.position.set(0, 6, 0.11);
+                billboard.add(frontTextMesh);
+                
+                // Add back text (same texture)
+                const backTextMaterial = new THREE.MeshBasicMaterial({ map: texture });
+                const backTextGeometry = new THREE.PlaneGeometry(7.8, 3.8);
+                const backTextMesh = new THREE.Mesh(backTextGeometry, backTextMaterial);
+                backTextMesh.position.set(0, 6, -0.11);
+                backTextMesh.rotation.y = Math.PI; // Rotate 180 degrees to face the opposite direction
+                billboard.add(backTextMesh);
+                
+                // Position and rotate the billboard
+                billboard.position.set(x, 0, z);
+                
+                // Make billboards perpendicular to the road
+                if (x < 0) {
+                    billboard.rotation.y = 0; // For left side
+                } else {
+                    billboard.rotation.y = Math.PI; // For right side, rotate 180 degrees
+                }
+                
+                scene.add(billboard);
+            };
+            
+            // Add billboards along the road
+            makeBillboard("MIKE BROWN LAW\nFENDER BENDER DEFENDER", -15, 100);
+            makeBillboard("ORANGE COUNTY\nBEST VIEWS AHEAD", 15, 300);
+            makeBillboard("ACCIDENT?\nCALL MIKE BROWN", -15, 500);
+            makeBillboard("PACIFIC COAST\nHIGHWAY", 15, 700);
+        };
+        createBillboards();
+
+        // Create a car model function
+        function createCarModel(color, isPlayerCar = false) {
+            // Create a group to hold all car parts
+            const carGroup = new THREE.Group();
+            
+            // Car body - main chassis
+            const bodyGeometry = new THREE.BoxGeometry(1, 0.4, 2);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ 
+                color: color,
+                metalness: 0.7,
+                roughness: 0.3
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 0.2;
+            carGroup.add(body);
+            
+            // Car top/cabin
+            const cabinGeometry = new THREE.BoxGeometry(0.8, 0.3, 1);
+            const cabinMaterial = new THREE.MeshStandardMaterial({ 
+                color: isPlayerCar ? 0x333333 : 0x444444,
+                metalness: 0.5,
+                roughness: 0.5
+            });
+            const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
+            cabin.position.set(0, 0.55, -0.1);
+            carGroup.add(cabin);
+            
+            // Windshield
+            const windshieldGeometry = new THREE.BoxGeometry(0.7, 0.25, 0.1);
+            const windshieldMaterial = new THREE.MeshStandardMaterial({
+                color: 0x88ccff,
+                transparent: true,
+                opacity: 0.7,
+                metalness: 0.9,
+                roughness: 0.1
+            });
+            const windshield = new THREE.Mesh(windshieldGeometry, windshieldMaterial);
+            windshield.position.set(0, 0.55, 0.4);
+            carGroup.add(windshield);
+            
+            // Wheels
+            const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 16);
+            const wheelMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x111111,
+                metalness: 0.5,
+                roughness: 0.7
+            });
+            
+            // Wheel rim material
+            const rimMaterial = new THREE.MeshStandardMaterial({
+                color: 0xcccccc,
+                metalness: 0.9,
+                roughness: 0.1
+            });
+            
+            // Function to create a wheel with rim
+            function createWheel(x, y, z) {
+                const wheelGroup = new THREE.Group();
+                
+                // Tire
+                const tire = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                tire.rotation.z = Math.PI / 2;
+                wheelGroup.add(tire);
+                
+                // Rim/hubcap
+                const rimGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.11, 8);
+                const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+                rim.rotation.z = Math.PI / 2;
+                wheelGroup.add(rim);
+                
+                wheelGroup.position.set(x, y, z);
+                return wheelGroup;
+            }
+            
+            // Front left wheel
+            const wheelFL = createWheel(0.6, 0.2, 0.7);
+            carGroup.add(wheelFL);
+            
+            // Front right wheel
+            const wheelFR = createWheel(-0.6, 0.2, 0.7);
+            carGroup.add(wheelFR);
+            
+            // Rear left wheel
+            const wheelRL = createWheel(0.6, 0.2, -0.7);
+            carGroup.add(wheelRL);
+            
+            // Rear right wheel
+            const wheelRR = createWheel(-0.6, 0.2, -0.7);
+            carGroup.add(wheelRR);
+            
+            // Store wheels for animation
+            carGroup.wheels = [wheelFL, wheelFR, wheelRL, wheelRR];
+            
+            // Headlights
+            if (isPlayerCar) {
+                const headlightGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.05);
+                const headlightMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xffffcc,
+                    emissive: 0xffffcc,
+                    emissiveIntensity: 1
+                });
+                
+                const headlightLeft = new THREE.Mesh(headlightGeometry, headlightMaterial);
+                headlightLeft.position.set(0.4, 0.25, 1);
+                carGroup.add(headlightLeft);
+                
+                const headlightRight = new THREE.Mesh(headlightGeometry, headlightMaterial);
+                headlightRight.position.set(-0.4, 0.25, 1);
+                carGroup.add(headlightRight);
+            }
+            
+            // Taillights
+            const taillightGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.05);
+            const taillightMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 0.5
+            });
+            
+            const taillightLeft = new THREE.Mesh(taillightGeometry, taillightMaterial);
+            taillightLeft.position.set(0.4, 0.25, -1);
+            carGroup.add(taillightLeft);
+            
+            const taillightRight = new THREE.Mesh(taillightGeometry, taillightMaterial);
+            taillightRight.position.set(-0.4, 0.25, -1);
+            carGroup.add(taillightRight);
+            
+            // Add bumpers
+            const frontBumperGeometry = new THREE.BoxGeometry(1, 0.2, 0.1);
+            const bumperMaterial = new THREE.MeshStandardMaterial({
+                color: 0xcccccc,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            const frontBumper = new THREE.Mesh(frontBumperGeometry, bumperMaterial);
+            frontBumper.position.set(0, 0.15, 1);
+            carGroup.add(frontBumper);
+            
+            const rearBumperGeometry = new THREE.BoxGeometry(1, 0.2, 0.1);
+            const rearBumper = new THREE.Mesh(rearBumperGeometry, bumperMaterial);
+            rearBumper.position.set(0, 0.15, -1);
+            carGroup.add(rearBumper);
+            
+            // License plates
+            const licensePlateGeometry = new THREE.PlaneGeometry(0.4, 0.2);
+            const frontLicenseMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff,
+                side: THREE.DoubleSide
+            });
+            const frontLicense = new THREE.Mesh(licensePlateGeometry, frontLicenseMaterial);
+            frontLicense.position.set(0, 0.25, 1.01);
+            carGroup.add(frontLicense);
+            
+            const rearLicenseMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffcc,
+                side: THREE.DoubleSide
+            });
+            const rearLicense = new THREE.Mesh(licensePlateGeometry, rearLicenseMaterial);
+            rearLicense.position.set(0, 0.25, -1.01);
+            carGroup.add(rearLicense);
+            
+            // Add a grille to the front (for more detail)
+            if (isPlayerCar) {
+                const grilleGeometry = new THREE.PlaneGeometry(0.6, 0.15);
+                const grilleMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x111111,
+                    metalness: 0.9,
+                    roughness: 0.3,
+                    side: THREE.DoubleSide
+                });
+                const grille = new THREE.Mesh(grilleGeometry, grilleMaterial);
+                grille.position.set(0, 0.3, 1.01);
+                carGroup.add(grille);
+            }
+            
+            return carGroup;
+        }
+
+        // Player car
+        const player = createCarModel(0xff0000, true);
+        player.position.set(0, 0.25, 0);
+        scene.add(player);
+
+        // Traffic cars
+        const trafficCars = [];
+        function spawnTrafficCar(z) {
+            const carColors = [0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffffff];
+            const randomColor = carColors[Math.floor(Math.random() * carColors.length)];
+            const car = createCarModel(randomColor);
+            const lane = Math.floor(Math.random() * 3) - 1;
+            car.position.set(lane * 2, 0.25, z);
+            scene.add(car);
+            trafficCars.push({ mesh: car, speed: 6 + Math.random() * 6, isTailgater: false });
+        }
+        for (let i = 0; i < 20; i++) {
+            spawnTrafficCar(20 + i * 20);
+        }
+
+        function spawnTailgater() {
+            const lane = Math.floor(Math.random() * 3) - 1;
+            const x = lane * 2;
+            const z = player.position.z - 20;
+            const car = createCarModel(0xff3300);
+            car.position.set(x, 0.25, z);
+            scene.add(car);
+            trafficCars.push({ 
+                mesh: car, 
+                speed: 24, 
+                isTailgater: true,
+                targetLane: lane,
+                changingLane: false,
+                laneChangeDirection: 0,
+                laneChangeSpeed: 15
+            });
+        }
+
+        // Scenery
+        function createPalmTree(x, z) {
+            // Create a group for the palm tree
+            const palmTree = new THREE.Group();
+            
+            // Improved trunk
+            const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.3, 4, 8);
+            const trunkMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x8B4513,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+            trunk.position.y = 2;
+            trunk.castShadow = true;
+            palmTree.add(trunk);
+            
+            // Create palm fronds (leaves)
+            const createPalmFrond = (angle, tilt) => {
+                const frondGroup = new THREE.Group();
+                
+                // Stem of the frond
+                const stemGeometry = new THREE.CylinderGeometry(0.05, 0.1, 2.5, 5);
+                const stemMaterial = new THREE.MeshStandardMaterial({ color: 0x7B5D3A });
+                const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+                stem.position.y = 1.25;
+                stem.rotation.x = tilt;
+                stem.castShadow = true;
+                frondGroup.add(stem);
+                
+                // Leaf part
+                const leafGeometry = new THREE.ConeGeometry(0.7, 2, 4);
+                const leafMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x2E8B57,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
+                leaf.scale.z = 0.2;
+                leaf.position.y = 2.5;
+                leaf.rotation.x = tilt - Math.PI/2;
+                leaf.castShadow = true;
+                frondGroup.add(leaf);
+                
+                frondGroup.rotation.y = angle;
+                return frondGroup;
+            };
+            
+            // Add multiple fronds in a circle
+            const frondCount = 7;
+            for (let i = 0; i < frondCount; i++) {
+                const angle = (i / frondCount) * Math.PI * 2;
+                const tilt = Math.PI / 4; // 45 degrees tilt
+                const frond = createPalmFrond(angle, tilt);
+                frond.position.y = 4;
+                palmTree.add(frond);
+            }
+            
+            // Add coconuts
+            const coconutGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+            const coconutMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+            
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2;
+                const coconut = new THREE.Mesh(coconutGeometry, coconutMaterial);
+                coconut.position.set(
+                    Math.cos(angle) * 0.3,
+                    3.8,
+                    Math.sin(angle) * 0.3
+                );
+                coconut.castShadow = true;
+                palmTree.add(coconut);
+            }
+            
+            palmTree.position.set(x, 0, z);
+            scene.add(palmTree);
+            
+            return palmTree;
+        }
+
+        // Add more palm trees and vary their positions
+        const palmTrees = [];
+        for (let i = 0; i < 40; i++) {
+            // Left side (beach side) - more trees
+            if (Math.random() < 0.7) {
+                const x = -15 - Math.random() * 30;
+                const z = i * 50 - 500 + Math.random() * 100;
+                palmTrees.push(createPalmTree(x, z));
+            }
+            
+            // Right side (fewer trees)
+            if (Math.random() < 0.3) {
+                const x = 15 + Math.random() * 10;
+                const z = i * 70 - 500 + Math.random() * 100;
+                palmTrees.push(createPalmTree(x, z));
+            }
+        }
+
+        // Add beach props
+        const createBeachProps = () => {
+            // Beach umbrella function
+            const createBeachUmbrella = (x, z) => {
+                const umbrellaGroup = new THREE.Group();
+                
+                // Pole
+                const poleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+                const poleMaterial = new THREE.MeshStandardMaterial({ color: 0xC0C0C0 });
+                const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+                pole.position.y = 1.5;
+                pole.castShadow = true;
+                umbrellaGroup.add(pole);
+                
+                // Umbrella top
+                const topGeometry = new THREE.ConeGeometry(2, 0.5, 16, 1, true);
+                const topMaterial = new THREE.MeshStandardMaterial({ 
+                    color: Math.random() > 0.5 ? 0xFF6347 : 0x4169E1,
+                    side: THREE.DoubleSide
+                });
+                const top = new THREE.Mesh(topGeometry, topMaterial);
+                top.position.y = 3;
+                top.castShadow = true;
+                umbrellaGroup.add(top);
+                
+                umbrellaGroup.position.set(x, 0, z);
+                scene.add(umbrellaGroup);
+            };
+            
+            // Add some umbrellas along the beach
+            for (let i = 0; i < 15; i++) {
+                const x = -30 - Math.random() * 20;
+                const z = i * 150 - 500 + Math.random() * 100;
+                createBeachUmbrella(x, z);
+            }
+            
+            // Add some beach towels
+            const createBeachTowel = (x, z) => {
+                const towelGeometry = new THREE.PlaneGeometry(2, 4);
+                const towelMaterial = new THREE.MeshStandardMaterial({ 
+                    color: [0xFF6347, 0x4169E1, 0xFFD700, 0x32CD32][Math.floor(Math.random() * 4)],
+                    side: THREE.DoubleSide
+                });
+                const towel = new THREE.Mesh(towelGeometry, towelMaterial);
+                towel.rotation.x = -Math.PI / 2;
+                towel.position.set(x, 0.01, z);
+                scene.add(towel);
+            };
+            
+            // Add towels near umbrellas
+            for (let i = 0; i < 20; i++) {
+                const x = -30 - Math.random() * 20;
+                const z = i * 120 - 500 + Math.random() * 100;
+                createBeachTowel(x, z);
+            }
+        };
+        createBeachProps();
+
+        // Add lifeguard towers
+        const createLifeguardTowers = () => {
+            for (let i = 0; i < 5; i++) {
+                const towerGroup = new THREE.Group();
+                
+                // Base/platform
+                const baseGeometry = new THREE.BoxGeometry(3, 0.5, 3);
+                const baseMaterial = new THREE.MeshStandardMaterial({ color: 0xD2B48C });
+                const base = new THREE.Mesh(baseGeometry, baseMaterial);
+                base.position.y = 0.25;
+                base.castShadow = true;
+                towerGroup.add(base);
+                
+                // Supports/legs
+                for (let j = 0; j < 4; j++) {
+                    const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 3, 6);
+                    const legMaterial = new THREE.MeshStandardMaterial({ color: 0xA0522D });
+                    const leg = new THREE.Mesh(legGeometry, legMaterial);
+                    
+                    const xPos = ((j % 2) * 2 - 1) * 1.2;
+                    const zPos = (Math.floor(j / 2) * 2 - 1) * 1.2;
+                    
+                    leg.position.set(xPos, 1.75, zPos);
+                    leg.castShadow = true;
+                    towerGroup.add(leg);
+                }
+                
+                // Tower cabin
+                const cabinGeometry = new THREE.BoxGeometry(2.5, 2, 2.5);
+                const cabinMaterial = new THREE.MeshStandardMaterial({ color: 0xFF4500 });
+                const cabin = new THREE.Mesh(cabinGeometry, cabinMaterial);
+                cabin.position.y = 3.5;
+                cabin.castShadow = true;
+                towerGroup.add(cabin);
+                
+                // Roof
+                const roofGeometry = new THREE.ConeGeometry(2, 1, 4);
+                const roofMaterial = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = 5;
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                towerGroup.add(roof);
+                
+                // Position the tower
+                const x = -60 - Math.random() * 10;
+                const z = i * 500;
+                towerGroup.position.set(x, 0, z);
+                
+                scene.add(towerGroup);
+            }
+        };
+        createLifeguardTowers();
+
+        // Add particle systems for beach environment
+        const createParticleSystems = () => {
+            // Sand particles
+            const sandParticleCount = 500;
+            const sandParticleGeometry = new THREE.BufferGeometry();
+            const sandParticlePositions = new Float32Array(sandParticleCount * 3);
+            const sandParticleSizes = new Float32Array(sandParticleCount);
+            
+            for (let i = 0; i < sandParticleCount; i++) {
+                // Position particles in a wide area on the left (beach side)
+                const x = -20 - Math.random() * 40;
+                const y = 0.1 + Math.random() * 1.5;
+                const z = Math.random() * 1000 - 500;
+                
+                sandParticlePositions[i * 3] = x;
+                sandParticlePositions[i * 3 + 1] = y;
+                sandParticlePositions[i * 3 + 2] = z;
+                
+                sandParticleSizes[i] = 0.05 + Math.random() * 0.1;
+            }
+            
+            sandParticleGeometry.setAttribute('position', new THREE.BufferAttribute(sandParticlePositions, 3));
+            sandParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sandParticleSizes, 1));
+            
+            const sandParticleMaterial = new THREE.PointsMaterial({
+                color: 0xf2d2a9,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.6,
+                sizeAttenuation: true
+            });
+            
+            const sandParticles = new THREE.Points(sandParticleGeometry, sandParticleMaterial);
+            scene.add(sandParticles);
+            
+            // Ocean spray particles near the shoreline
+            const sprayParticleCount = 300;
+            const sprayParticleGeometry = new THREE.BufferGeometry();
+            const sprayParticlePositions = new Float32Array(sprayParticleCount * 3);
+            const sprayParticleSizes = new Float32Array(sprayParticleCount);
+            
+            for (let i = 0; i < sprayParticleCount; i++) {
+                // Position particles along the shoreline
+                const x = -105 + (Math.random() * 2 - 1) * 5;
+                const y = Math.random() * 0.5;
+                const z = Math.random() * 1000 - 500;
+                
+                sprayParticlePositions[i * 3] = x;
+                sprayParticlePositions[i * 3 + 1] = y;
+                sprayParticlePositions[i * 3 + 2] = z;
+                
+                sprayParticleSizes[i] = 0.05 + Math.random() * 0.1;
+            }
+            
+            sprayParticleGeometry.setAttribute('position', new THREE.BufferAttribute(sprayParticlePositions, 3));
+            sprayParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sprayParticleSizes, 1));
+            
+            const sprayParticleMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.7,
+                sizeAttenuation: true
+            });
+            
+            const sprayParticles = new THREE.Points(sprayParticleGeometry, sprayParticleMaterial);
+            scene.add(sprayParticles);
+            
+            // Animation function for particles
+            const animateParticles = (time, delta) => {
+                // Animate sand particles
+                const sandPositions = sandParticleGeometry.attributes.position.array;
+                for (let i = 0; i < sandParticleCount; i++) {
+                    // Make sand particles drift slightly
+                    sandPositions[i * 3] += Math.sin(time * 0.5 + i) * 0.01;
+                    sandPositions[i * 3 + 1] += Math.cos(time * 0.5 + i) * 0.005;
+                    
+                    // Reset particles that go too high
+                    if (sandPositions[i * 3 + 1] > 1.8) {
+                        sandPositions[i * 3 + 1] = 0.1;
+                    }
+                    
+                    // Make particles follow the player's z position
+                    sandPositions[i * 3 + 2] = (player.position.z + i * 10) % 1000 - 500;
+                }
+                sandParticleGeometry.attributes.position.needsUpdate = true;
+                
+                // Animate spray particles
+                const sprayPositions = sprayParticleGeometry.attributes.position.array;
+                for (let i = 0; i < sprayParticleCount; i++) {
+                    // Make spray particles rise and fall
+                    sprayPositions[i * 3 + 1] += 0.01 + Math.random() * 0.02;
+                    
+                    // Reset particles that go too high
+                    if (sprayPositions[i * 3 + 1] > 0.5) {
+                        sprayPositions[i * 3 + 1] = 0;
+                    }
+                    
+                    // Make particles follow the player's z position
+                    sprayPositions[i * 3 + 2] = (player.position.z + i * 10) % 1000 - 500;
+                }
+                sprayParticleGeometry.attributes.position.needsUpdate = true;
+            };
+            
+            return { animateParticles };
+        };
+        const particles = createParticleSystems();
+
+        // Controls
+        const keys = { left: false, right: false, up: false, down: false };
+        let playerSpeed = 0;
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') keys.left = true;
+            if (e.key === 'ArrowRight') keys.right = true;
+            if (e.key === 'ArrowUp') keys.up = true;
+            if (e.key === 'ArrowDown') keys.down = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') keys.left = false;
+            if (e.key === 'ArrowRight') keys.right = false;
+            if (e.key === 'ArrowUp') keys.up = false;
+            if (e.key === 'ArrowDown') keys.down = false;
+        });
+
+        // Game loop
+        function animate(timestamp = 0) {
+            const delta = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            requestAnimationFrame(animate);
+
+            if (!gameActive) {
+                // Even when game is not active, animate environment elements
+                ocean.animateWaves(timestamp * 0.001);
+                particles.animateParticles(timestamp * 0.001, delta);
+                renderer.render(scene, camera);
+                return;
+            }
+
+            // Player movement
+            const laneChangeSpeed = 10; // units per second
+            if (keys.left) player.position.x += laneChangeSpeed * delta;
+            if (keys.right) player.position.x -= laneChangeSpeed * delta;
+            player.position.x = Math.max(-4, Math.min(4, player.position.x));
+
+            const acceleration = 10; // units per second squared
+            const maxSpeed = 20; // units per second
+            if (keys.up) playerSpeed += acceleration * delta;
+            if (keys.down) playerSpeed -= acceleration * delta;
+            playerSpeed = Math.max(0, Math.min(maxSpeed, playerSpeed));
+            player.position.z += playerSpeed * delta;
+
+            // Animate player car wheels
+            if (player.wheels) {
+                const wheelRotationSpeed = playerSpeed * 2; // Rotation speed based on car speed
+                player.wheels.forEach(wheel => {
+                    // Rotate around the wheel's local X axis
+                    wheel.children.forEach(part => {
+                        part.rotation.x += wheelRotationSpeed * delta;
+                    });
+                });
+            }
+
+            // Camera follow
+            camera.position.set(player.position.x, player.position.y + 2, player.position.z - 5);
+            camera.lookAt(player.position);
+
+            // Animate environment elements
+            ocean.animateWaves(timestamp * 0.001);
+            particles.animateParticles(timestamp * 0.001, delta);
+
+            // Traffic movement
+            trafficCars.forEach(car => {
+                // Move car forward
+                car.mesh.position.z += car.speed * delta;
+                
+                // Animate traffic car wheels
+                if (car.mesh.wheels) {
+                    const wheelRotationSpeed = car.speed * 2;
+                    car.mesh.wheels.forEach(wheel => {
+                        // Rotate around the wheel's local X axis
+                        wheel.children.forEach(part => {
+                            part.rotation.x += wheelRotationSpeed * delta;
+                        });
+                    });
+                }
+                
+                if (car.isTailgater) {
+                    // Check for obstacles ahead (other cars)
+                    let obstacleAhead = false;
+                    let obstacleDistance = 0;
+                    let obstacleLane = 0;
+                    
+                    // Look for obstacles in front of tailgater
+                    trafficCars.forEach(otherCar => {
+                        if (otherCar !== car && !otherCar.isTailgater) {
+                            const distance = otherCar.mesh.position.z - car.mesh.position.z;
+                            const xDiff = Math.abs(otherCar.mesh.position.x - car.mesh.position.x);
+                            
+                            // If car is ahead and in same lane (or close to it) and within detection range
+                            if (distance > 0 && distance < 10 && xDiff < 1.5) {
+                                obstacleAhead = true;
+                                obstacleDistance = distance;
+                                obstacleLane = Math.round(otherCar.mesh.position.x / 2);
+                            }
+                        }
+                    });
+                    
+                    // Handle lane changing for obstacle avoidance
+                    if (obstacleAhead && !car.changingLane) {
+                        // Decide which lane to change to
+                        const currentLane = Math.round(car.mesh.position.x / 2);
+                        let newLane;
+                        
+                        // Try to find an open lane
+                        if (currentLane === 0) {
+                            // In middle lane, randomly choose left or right
+                            newLane = Math.random() < 0.5 ? -1 : 1;
+                        } else if (currentLane === -1) {
+                            // In left lane, try middle or right
+                            const middleBlocked = trafficCars.some(otherCar => 
+                                Math.abs(otherCar.mesh.position.x) < 1 && 
+                                Math.abs(otherCar.mesh.position.z - car.mesh.position.z) < 5
+                            );
+                            newLane = middleBlocked ? 1 : 0;
+                        } else {
+                            // In right lane, try middle or left
+                            const middleBlocked = trafficCars.some(otherCar => 
+                                Math.abs(otherCar.mesh.position.x) < 1 && 
+                                Math.abs(otherCar.mesh.position.z - car.mesh.position.z) < 5
+                            );
+                            newLane = middleBlocked ? -1 : 0;
+                        }
+                        
+                        car.targetLane = newLane;
+                        car.changingLane = true;
+                        car.laneChangeDirection = newLane > currentLane ? 1 : -1;
+                    }
+                    
+                    // Handle lane changing movement
+                    if (car.changingLane) {
+                        const targetX = car.targetLane * 2;
+                        const moveAmount = car.laneChangeDirection * car.laneChangeSpeed * delta;
+                        car.mesh.position.x += moveAmount;
+                        
+                        // Check if we've reached or passed the target lane
+                        if ((car.laneChangeDirection > 0 && car.mesh.position.x >= targetX) ||
+                            (car.laneChangeDirection < 0 && car.mesh.position.x <= targetX)) {
+                            car.mesh.position.x = targetX; // Snap to exact lane position
+                            car.changingLane = false;
+                        }
+                    }
+                    
+                    // Reset tailgater if it gets too far ahead
+                    if (car.mesh.position.z > player.position.z + 50) {
+                        car.mesh.position.z = player.position.z - 500;
+                        const lane = Math.floor(Math.random() * 3) - 1;
+                        car.mesh.position.x = lane * 2;
+                        car.targetLane = lane;
+                        car.changingLane = false;
+                    }
+                } else {
+                    // Regular traffic car logic
+                    if (car.mesh.position.z < player.position.z - 50) {
+                        car.mesh.position.z = player.position.z + 500;
+                        const lane = Math.floor(Math.random() * 3) - 1;
+                        car.mesh.position.x = lane * 2;
+                    }
+                }
+            });
+
+            // Spawn tailgater every 5 seconds
+            if (gameActive && Date.now() - lastTailgaterTime > tailgaterInterval) {
+                spawnTailgater();
+                lastTailgaterTime = Date.now();
+            }
+
+            // Collision check (rear-end only) - updated for car models
+            trafficCars.forEach(car => {
+                // Calculate distance between cars for collision detection
+                const distanceZ = Math.abs(car.mesh.position.z - player.position.z);
+                const distanceX = Math.abs(car.mesh.position.x - player.position.x);
+                
+                // Check if car is behind player and close enough for collision
+                if (car.mesh.position.z < player.position.z && distanceZ < 1.5 && distanceX < 1.2) {
+                    showDecisionScreen();
+                    playerSpeed = 0;
+                    gameActive = false;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Set initial camera position
+        camera.position.set(0, 3, -6);
+        camera.lookAt(0, 0, 0);
+
+        // Initial render
+        renderer.render(scene, camera);
+
+        animate();
+    </script>
+</body>
+</html>
