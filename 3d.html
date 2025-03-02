@@ -576,95 +576,54 @@
 
         // Add beach sand on both sides of the road
         const createBeachTerrain = () => {
-            // Left side (beach side)
-            const beachGeometry = new THREE.PlaneGeometry(100, 10000);
+            // Right side (beach side) - from player's perspective
+            const beachGeometry = new THREE.PlaneGeometry(50, 10000);
             const beachMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0xf2d2a9, // Sand color
                 roughness: 1.0,
                 metalness: 0.0
             });
-            const leftBeach = new THREE.Mesh(beachGeometry, beachMaterial);
-            leftBeach.rotation.x = -Math.PI / 2;
-            leftBeach.position.set(-55, -0.1, 0);
-            leftBeach.receiveShadow = true;
-            scene.add(leftBeach);
-            
-            // Right side (mountain side)
             const rightBeach = new THREE.Mesh(beachGeometry, beachMaterial);
             rightBeach.rotation.x = -Math.PI / 2;
-            rightBeach.position.set(55, -0.1, 0);
+            rightBeach.position.set(-25, -0.1, 0);
             rightBeach.receiveShadow = true;
             scene.add(rightBeach);
+            
+            // Left side (mountain/hill side) - from player's perspective
+            const leftTerrainGeometry = new THREE.PlaneGeometry(100, 10000);
+            const leftTerrainMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x8B6914, // Darker earth color for hills
+                roughness: 1.0,
+                metalness: 0.0
+            });
+            const leftTerrain = new THREE.Mesh(leftTerrainGeometry, leftTerrainMaterial);
+            leftTerrain.rotation.x = -Math.PI / 2;
+            leftTerrain.position.set(55, -0.1, 0);
+            leftTerrain.receiveShadow = true;
+            scene.add(leftTerrain);
         };
         createBeachTerrain();
 
         // Add ocean
         const createOcean = () => {
-            const oceanGeometry = new THREE.PlaneGeometry(1000, 10000);
+            // Make ocean only appear on the right side (negative x) by adjusting width and position
+            const oceanGeometry = new THREE.PlaneGeometry(500, 10000);
             const oceanMaterial = new THREE.MeshStandardMaterial({
-                color: 0x0077be,
-                roughness: 0.1,
-                metalness: 0.8,
+                color: 0x00BFFF, // Deep Sky Blue - more vibrant Caribbean color
+                roughness: 0.0,
+                metalness: 0.3,
                 transparent: true,
-                opacity: 0.8
+                opacity: 0.9,
+                emissive: 0x0088cc,
+                emissiveIntensity: 0.2
             });
             const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
             ocean.rotation.x = -Math.PI / 2;
-            ocean.position.set(-550, -0.5, 0);
+            // Position the ocean further to the right (negative x) so it doesn't appear on the left
+            ocean.position.set(-250, -0.5, 0);
             scene.add(ocean);
             
-            // Add some waves/foam at the shoreline
-            const foamGeometry = new THREE.PlaneGeometry(10, 10000);
-            const foamMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.7
-            });
-            const foam = new THREE.Mesh(foamGeometry, foamMaterial);
-            foam.rotation.x = -Math.PI / 2;
-            foam.position.set(-105, -0.05, 0);
-            scene.add(foam);
-            
-            // Create animated waves
-            const waveCount = 20;
-            const waves = [];
-            
-            for (let i = 0; i < waveCount; i++) {
-                const waveGeometry = new THREE.PlaneGeometry(80, 2);
-                const waveMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x88ccff,
-                    transparent: true,
-                    opacity: 0.4
-                });
-                const wave = new THREE.Mesh(waveGeometry, waveMaterial);
-                wave.rotation.x = -Math.PI / 2;
-                
-                // Position waves at different distances in the ocean
-                const distanceFromShore = 20 + i * 20;
-                wave.position.set(-105 - distanceFromShore, -0.2, 0);
-                
-                // Store animation parameters
-                wave.userData = {
-                    speed: 0.2 + Math.random() * 0.3,
-                    offset: Math.random() * Math.PI * 2
-                };
-                
-                scene.add(wave);
-                waves.push(wave);
-            }
-            
-            // Animation function for waves
-            const animateWaves = (time) => {
-                waves.forEach((wave, index) => {
-                    // Make waves move up and down slightly
-                    wave.position.y = -0.2 + Math.sin(time * wave.userData.speed + wave.userData.offset) * 0.1;
-                    
-                    // Make waves move forward slowly
-                    wave.position.z = (player.position.z + index * 500) % 10000 - 5000;
-                });
-            };
-            
-            return { animateWaves };
+            return { animateWaves: () => {} }; // Empty function as placeholder
         };
         const ocean = createOcean();
 
@@ -685,7 +644,7 @@
                 
                 const mountain = new THREE.Mesh(mountainGeometry, mountainMaterial);
                 
-                // Position mountains on the right side, far away
+                // Position mountains on the left side from player's perspective
                 const xPos = 150 + Math.random() * 100;
                 const zPos = i * 200 - 1000 + Math.random() * 200;
                 
@@ -779,10 +738,11 @@
             };
             
             // Add billboards along the road
-            makeBillboard("MIKE BROWN LAW\nFENDER BENDER DEFENDER", -15, 100);
-            makeBillboard("ORANGE COUNTY\nBEST VIEWS AHEAD", 15, 300);
-            makeBillboard("ACCIDENT?\nCALL MIKE BROWN", -15, 500);
-            makeBillboard("PACIFIC COAST\nHIGHWAY", 15, 700);
+            makeBillboard("MIKE BROWN LAW\nFENDER BENDER DEFENDER", 15, 100);
+            makeBillboard("OCEAN VIEW\nBEACH ACCESS AHEAD", -15, 300);
+            makeBillboard("ACCIDENT?\nCALL MIKE BROWN", 15, 500);
+            makeBillboard("PACIFIC COAST\nHIGHWAY", -15, 700);
+            makeBillboard("CRYSTAL COVE\n2 MILES AHEAD", -15, 900);
         };
         createBillboards();
 
@@ -1085,14 +1045,14 @@
         // Add more palm trees and vary their positions
         const palmTrees = [];
         for (let i = 0; i < 40; i++) {
-            // Left side (beach side) - more trees
+            // Right side (beach side) - more trees - from player's perspective
             if (Math.random() < 0.7) {
-                const x = -15 - Math.random() * 30;
+                const x = -10 - Math.random() * 20;
                 const z = i * 50 - 500 + Math.random() * 100;
                 palmTrees.push(createPalmTree(x, z));
             }
             
-            // Right side (fewer trees)
+            // Left side (fewer trees) - from player's perspective
             if (Math.random() < 0.3) {
                 const x = 15 + Math.random() * 10;
                 const z = i * 70 - 500 + Math.random() * 100;
@@ -1131,7 +1091,7 @@
             
             // Add some umbrellas along the beach
             for (let i = 0; i < 15; i++) {
-                const x = -30 - Math.random() * 20;
+                const x = -15 - Math.random() * 20;
                 const z = i * 150 - 500 + Math.random() * 100;
                 createBeachUmbrella(x, z);
             }
@@ -1151,7 +1111,7 @@
             
             // Add towels near umbrellas
             for (let i = 0; i < 20; i++) {
-                const x = -30 - Math.random() * 20;
+                const x = -15 - Math.random() * 20;
                 const z = i * 120 - 500 + Math.random() * 100;
                 createBeachTowel(x, z);
             }
@@ -1203,7 +1163,7 @@
                 towerGroup.add(roof);
                 
                 // Position the tower
-                const x = -60 - Math.random() * 10;
+                const x = -40 - Math.random() * 10;
                 const z = i * 500;
                 towerGroup.position.set(x, 0, z);
                 
@@ -1212,111 +1172,436 @@
         };
         createLifeguardTowers();
 
+        // Add simple building blocks on the left side of the road
+        const createSimpleBuildings = () => {
+            // Create buildings along the left side of the road
+            for (let i = 0; i < 20; i++) {
+                // Determine building type
+                const buildingType = Math.floor(Math.random() * 3); // 0: house, 1: shop, 2: office
+                
+                // Position buildings on the left side of the road with some spacing
+                // Road is at x=0 with width 10, so we start at x=7 (edge of road + small gap)
+                const xPos = 9 + Math.random() * 10;
+                // Space buildings along the road with some randomness
+                const zPos = i * 50 - 500 + Math.random() * 30;
+                
+                // Create different types of buildings
+                if (buildingType === 0) {
+                    // House
+                    createHouse(xPos, zPos);
+                } else if (buildingType === 1) {
+                    // Shop
+                    createShop(xPos, zPos);
+                } else {
+                    // Office building
+                    createOfficeBuilding(xPos, zPos);
+                }
+            }
+            
+            // Function to create a house
+            function createHouse(x, z) {
+                const buildingGroup = new THREE.Group();
+                
+                // Random house dimensions
+                const width = 4 + Math.random() * 2;
+                const height = 2.5 + Math.random() * 1;
+                const depth = 4 + Math.random() * 2;
+                
+                // Main house structure
+                const houseGeometry = new THREE.BoxGeometry(width, height, depth);
+                
+                // Random house colors (pastel)
+                const houseColors = [0xF5F5DC, 0xFFE4C4, 0xFFDAB9, 0xEEE8AA, 0xF0E68C, 0xE0FFFF, 0xB0E0E6];
+                const houseColor = houseColors[Math.floor(Math.random() * houseColors.length)];
+                
+                const houseMaterial = new THREE.MeshStandardMaterial({
+                    color: houseColor,
+                    roughness: 0.8,
+                    metalness: 0.1
+                });
+                
+                const house = new THREE.Mesh(houseGeometry, houseMaterial);
+                house.position.y = height / 2;
+                house.castShadow = true;
+                house.receiveShadow = true;
+                buildingGroup.add(house);
+                
+                // Add a pitched roof
+                const roofHeight = 1.5;
+                const roofGeometry = new THREE.ConeGeometry(width * 0.7, roofHeight, 4);
+                
+                // Roof colors (darker than house)
+                const roofColors = [0x8B4513, 0xA52A2A, 0xCD5C5C, 0x8B0000, 0x800000];
+                const roofColor = roofColors[Math.floor(Math.random() * roofColors.length)];
+                
+                const roofMaterial = new THREE.MeshStandardMaterial({
+                    color: roofColor,
+                    roughness: 0.9,
+                    metalness: 0.1
+                });
+                
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = height + roofHeight / 2;
+                roof.rotation.y = Math.PI / 4; // Rotate 45 degrees
+                roof.castShadow = true;
+                buildingGroup.add(roof);
+                
+                // Add windows
+                const windowSize = 0.5;
+                const windowGeometry = new THREE.PlaneGeometry(windowSize, windowSize);
+                const windowMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x87CEEB,
+                    roughness: 0.3,
+                    metalness: 0.8,
+                    emissive: 0x555555,
+                    emissiveIntensity: 0.2
+                });
+                
+                // Front windows - more windows with better spacing
+                for (let wx = -width/3; wx <= width/3; wx += width/3) {
+                    for (let wy = height/4; wy <= height*0.7; wy += height/3) {
+                        const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                        window.position.set(wx, wy, depth/2 + 0.01);
+                        window.castShadow = false;
+                        buildingGroup.add(window);
+                    }
+                }
+                
+                // Side windows - more windows with better spacing
+                for (let wz = -depth/3; wz <= depth/3; wz += depth/3) {
+                    for (let wy = height/4; wy <= height*0.7; wy += height/3) {
+                        const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                        window.position.set(width/2 + 0.01, wy, wz);
+                        window.rotation.y = Math.PI / 2;
+                        window.castShadow = false;
+                        buildingGroup.add(window);
+                        
+                        const window2 = new THREE.Mesh(windowGeometry, windowMaterial);
+                        window2.position.set(-width/2 - 0.01, wy, wz);
+                        window2.rotation.y = Math.PI / 2;
+                        window2.castShadow = false;
+                        buildingGroup.add(window2);
+                    }
+                }
+                
+                // Add a door with frame
+                const doorWidth = 0.8;
+                const doorHeight = 1.5;
+                
+                // Door frame
+                const frameWidth = doorWidth + 0.1;
+                const frameHeight = doorHeight + 0.1;
+                const frameGeometry = new THREE.PlaneGeometry(frameWidth, frameHeight);
+                const frameMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xD2B48C,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                
+                const doorFrame = new THREE.Mesh(frameGeometry, frameMaterial);
+                doorFrame.position.set(0, doorHeight/2, depth/2 + 0.005);
+                doorFrame.castShadow = false;
+                buildingGroup.add(doorFrame);
+                
+                // Door
+                const doorGeometry = new THREE.PlaneGeometry(doorWidth, doorHeight);
+                const doorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x8B4513,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                
+                const door = new THREE.Mesh(doorGeometry, doorMaterial);
+                door.position.set(0, doorHeight/2, depth/2 + 0.01);
+                door.castShadow = false;
+                buildingGroup.add(door);
+                
+                // Add doorknob
+                const knobGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+                const knobMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xFFD700,
+                    metalness: 0.9,
+                    roughness: 0.1
+                });
+                
+                const doorknob = new THREE.Mesh(knobGeometry, knobMaterial);
+                doorknob.position.set(doorWidth/3, doorHeight/2, depth/2 + 0.06);
+                buildingGroup.add(doorknob);
+                
+                // Add steps/porch
+                const stepsWidth = doorWidth * 1.5;
+                const stepsDepth = 0.5;
+                const stepsGeometry = new THREE.BoxGeometry(stepsWidth, 0.2, stepsDepth);
+                const stepsMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xA9A9A9,
+                    roughness: 1.0,
+                    metalness: 0.0
+                });
+                
+                const steps = new THREE.Mesh(stepsGeometry, stepsMaterial);
+                steps.position.set(0, 0.1, depth/2 + stepsDepth/2);
+                steps.castShadow = true;
+                steps.receiveShadow = true;
+                buildingGroup.add(steps);
+                
+                // Add a chimney (50% chance)
+                if (Math.random() > 0.5) {
+                    const chimneyWidth = 0.4;
+                    const chimneyHeight = 1;
+                    const chimneyGeometry = new THREE.BoxGeometry(chimneyWidth, chimneyHeight, chimneyWidth);
+                    const chimneyMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x8B4513,
+                        roughness: 1.0,
+                        metalness: 0.0
+                    });
+                    
+                    const chimney = new THREE.Mesh(chimneyGeometry, chimneyMaterial);
+                    chimney.position.set(width/3, height + chimneyHeight/2 + 0.5, 0);
+                    chimney.castShadow = true;
+                    buildingGroup.add(chimney);
+                }
+                
+                // Position the house
+                buildingGroup.position.set(x, 0, z);
+                
+                // Rotate to face the road (z-axis)
+                buildingGroup.rotation.y = -Math.PI/2; // Rotate 180 degrees to face the road
+                
+                // Add slight random rotation for variety, but keep facing generally toward the road
+                buildingGroup.rotation.y += (Math.random() * 0.2 - 0.1);
+                
+                scene.add(buildingGroup);
+            }
+            
+            // Function to create a shop
+            function createShop(x, z) {
+                const buildingGroup = new THREE.Group();
+                
+                // Shop dimensions
+                const width = 5 + Math.random() * 2;
+                const height = 3 + Math.random() * 1;
+                const depth = 4 + Math.random() * 2;
+                
+                // Main shop structure
+                const shopGeometry = new THREE.BoxGeometry(width, height, depth);
+                
+                // Shop colors
+                const shopColors = [0xE6E6FA, 0xFFE4E1, 0xFFEFD5, 0xF0FFF0, 0xF5FFFA];
+                const shopColor = shopColors[Math.floor(Math.random() * shopColors.length)];
+                
+                const shopMaterial = new THREE.MeshStandardMaterial({
+                    color: shopColor,
+                    roughness: 0.7,
+                    metalness: 0.2
+                });
+                
+                const shop = new THREE.Mesh(shopGeometry, shopMaterial);
+                shop.position.y = height / 2;
+                shop.castShadow = true;
+                shop.receiveShadow = true;
+                buildingGroup.add(shop);
+                
+                // Add a flat roof
+                const roofGeometry = new THREE.BoxGeometry(width + 0.5, 0.2, depth + 0.5);
+                const roofMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x696969,
+                    roughness: 0.8,
+                    metalness: 0.3
+                });
+                
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = height + 0.1;
+                roof.castShadow = true;
+                buildingGroup.add(roof);
+                
+                // Add a storefront with large windows
+                const storefrontWidth = width * 0.8;
+                const storefrontHeight = height * 0.6;
+                const storefrontGeometry = new THREE.PlaneGeometry(storefrontWidth, storefrontHeight);
+                const storefrontMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xADD8E6,
+                    transparent: true,
+                    opacity: 0.7,
+                    roughness: 0.1,
+                    metalness: 0.9,
+                    emissive: 0x555555,
+                    emissiveIntensity: 0.3
+                });
+                
+                const storefront = new THREE.Mesh(storefrontGeometry, storefrontMaterial);
+                storefront.position.set(0, storefrontHeight/2 + 0.5, depth/2 + 0.01);
+                buildingGroup.add(storefront);
+                
+                // Add a door
+                const doorWidth = 1.2;
+                const doorHeight = 2;
+                const doorGeometry = new THREE.PlaneGeometry(doorWidth, doorHeight);
+                const doorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x8B4513,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                
+                const door = new THREE.Mesh(doorGeometry, doorMaterial);
+                door.position.set(0, doorHeight/2, depth/2 + 0.02);
+                buildingGroup.add(door);
+                
+                // Add a shop sign
+                const signWidth = width * 0.7;
+                const signHeight = 0.8;
+                const signGeometry = new THREE.BoxGeometry(signWidth, signHeight, 0.2);
+                
+                // Random sign colors
+                const signColors = [0xFF6347, 0x4169E1, 0x32CD32, 0xFFD700, 0xFF69B4];
+                const signColor = signColors[Math.floor(Math.random() * signColors.length)];
+                
+                const signMaterial = new THREE.MeshStandardMaterial({
+                    color: signColor,
+                    roughness: 0.5,
+                    metalness: 0.5,
+                    emissive: signColor,
+                    emissiveIntensity: 0.2
+                });
+                
+                const sign = new THREE.Mesh(signGeometry, signMaterial);
+                sign.position.set(0, height + 0.5, depth/2 + 0.3);
+                sign.castShadow = true;
+                buildingGroup.add(sign);
+                
+                // Position the shop
+                buildingGroup.position.set(x, 0, z);
+                
+                // Face the shop toward the road
+                buildingGroup.rotation.y = -Math.PI/2; // Rotate 180 degrees to face the road
+                
+                scene.add(buildingGroup);
+            }
+            
+            // Function to create an office building
+            function createOfficeBuilding(x, z) {
+                const buildingGroup = new THREE.Group();
+                
+                // Office building dimensions
+                const width = 5 + Math.random() * 3;
+                const height = 6 + Math.random() * 4;
+                const depth = 5 + Math.random() * 3;
+                
+                // Main office structure
+                const officeGeometry = new THREE.BoxGeometry(width, height, depth);
+                
+                // Office colors (more corporate)
+                const officeColors = [0xD3D3D3, 0xA9A9A9, 0xC0C0C0, 0xDCDCDC, 0xF5F5F5];
+                const officeColor = officeColors[Math.floor(Math.random() * officeColors.length)];
+                
+                const officeMaterial = new THREE.MeshStandardMaterial({
+                    color: officeColor,
+                    roughness: 0.5,
+                    metalness: 0.5
+                });
+                
+                const office = new THREE.Mesh(officeGeometry, officeMaterial);
+                office.position.y = height / 2;
+                office.castShadow = true;
+                office.receiveShadow = true;
+                buildingGroup.add(office);
+                
+                // Add a flat roof
+                const roofGeometry = new THREE.BoxGeometry(width, 0.3, depth);
+                const roofMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x2F4F4F,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = height + 0.15;
+                roof.castShadow = true;
+                buildingGroup.add(roof);
+                
+                // Add windows (grid pattern)
+                const windowSize = 0.6;
+                const windowSpacing = 1.2;
+                const windowGeometry = new THREE.PlaneGeometry(windowSize, windowSize);
+                const windowMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x87CEEB,
+                    roughness: 0.1,
+                    metalness: 0.9,
+                    emissive: 0x555555,
+                    emissiveIntensity: 0.3
+                });
+                
+                // Front windows
+                for (let wx = -width/2 + windowSize; wx < width/2; wx += windowSpacing) {
+                    for (let wy = windowSize; wy < height; wy += windowSpacing) {
+                        const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                        window.position.set(wx, wy, depth/2 + 0.01);
+                        buildingGroup.add(window);
+                    }
+                }
+                
+                // Side windows
+                for (let wz = -depth/2 + windowSize; wz < depth/2; wz += windowSpacing) {
+                    for (let wy = windowSize; wy < height; wy += windowSpacing) {
+                        const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                        window.position.set(width/2 + 0.01, wy, wz);
+                        window.rotation.y = Math.PI / 2;
+                        buildingGroup.add(window);
+                        
+                        const window2 = new THREE.Mesh(windowGeometry, windowMaterial);
+                        window2.position.set(-width/2 - 0.01, wy, wz);
+                        window2.rotation.y = Math.PI / 2;
+                        buildingGroup.add(window2);
+                    }
+                }
+                
+                // Add entrance
+                const entranceWidth = 1.5;
+                const entranceHeight = 2;
+                const entranceDepth = 0.5;
+                
+                const entranceGeometry = new THREE.BoxGeometry(entranceWidth, entranceHeight, entranceDepth);
+                const entranceMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x696969,
+                    roughness: 0.5,
+                    metalness: 0.7
+                });
+                
+                const entrance = new THREE.Mesh(entranceGeometry, entranceMaterial);
+                entrance.position.set(0, entranceHeight/2, depth/2 + entranceDepth/2);
+                entrance.castShadow = true;
+                buildingGroup.add(entrance);
+                
+                // Add door
+                const doorWidth = 1;
+                const doorHeight = 1.8;
+                const doorGeometry = new THREE.PlaneGeometry(doorWidth, doorHeight);
+                const doorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x696969,
+                    roughness: 0.2,
+                    metalness: 0.8,
+                    emissive: 0x555555,
+                    emissiveIntensity: 0.1
+                });
+                
+                const door = new THREE.Mesh(doorGeometry, doorMaterial);
+                door.position.set(0, doorHeight/2, depth/2 + entranceDepth + 0.01);
+                buildingGroup.add(door);
+                
+                // Position the office building
+                buildingGroup.position.set(x, 0, z);
+                
+                // Face the building toward the road
+                buildingGroup.rotation.y = -Math.PI/2; // Rotate 180 degrees to face the road
+                
+                scene.add(buildingGroup);
+            }
+        };
+        createSimpleBuildings();
+
         // Add particle systems for beach environment
         const createParticleSystems = () => {
-            // Sand particles
-            const sandParticleCount = 500;
-            const sandParticleGeometry = new THREE.BufferGeometry();
-            const sandParticlePositions = new Float32Array(sandParticleCount * 3);
-            const sandParticleSizes = new Float32Array(sandParticleCount);
-            
-            for (let i = 0; i < sandParticleCount; i++) {
-                // Position particles in a wide area on the left (beach side)
-                const x = -20 - Math.random() * 40;
-                const y = 0.1 + Math.random() * 1.5;
-                const z = Math.random() * 1000 - 500;
-                
-                sandParticlePositions[i * 3] = x;
-                sandParticlePositions[i * 3 + 1] = y;
-                sandParticlePositions[i * 3 + 2] = z;
-                
-                sandParticleSizes[i] = 0.05 + Math.random() * 0.1;
-            }
-            
-            sandParticleGeometry.setAttribute('position', new THREE.BufferAttribute(sandParticlePositions, 3));
-            sandParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sandParticleSizes, 1));
-            
-            const sandParticleMaterial = new THREE.PointsMaterial({
-                color: 0xf2d2a9,
-                size: 0.1,
-                transparent: true,
-                opacity: 0.6,
-                sizeAttenuation: true
-            });
-            
-            const sandParticles = new THREE.Points(sandParticleGeometry, sandParticleMaterial);
-            scene.add(sandParticles);
-            
-            // Ocean spray particles near the shoreline
-            const sprayParticleCount = 300;
-            const sprayParticleGeometry = new THREE.BufferGeometry();
-            const sprayParticlePositions = new Float32Array(sprayParticleCount * 3);
-            const sprayParticleSizes = new Float32Array(sprayParticleCount);
-            
-            for (let i = 0; i < sprayParticleCount; i++) {
-                // Position particles along the shoreline
-                const x = -105 + (Math.random() * 2 - 1) * 5;
-                const y = Math.random() * 0.5;
-                const z = Math.random() * 1000 - 500;
-                
-                sprayParticlePositions[i * 3] = x;
-                sprayParticlePositions[i * 3 + 1] = y;
-                sprayParticlePositions[i * 3 + 2] = z;
-                
-                sprayParticleSizes[i] = 0.05 + Math.random() * 0.1;
-            }
-            
-            sprayParticleGeometry.setAttribute('position', new THREE.BufferAttribute(sprayParticlePositions, 3));
-            sprayParticleGeometry.setAttribute('size', new THREE.BufferAttribute(sprayParticleSizes, 1));
-            
-            const sprayParticleMaterial = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.1,
-                transparent: true,
-                opacity: 0.7,
-                sizeAttenuation: true
-            });
-            
-            const sprayParticles = new THREE.Points(sprayParticleGeometry, sprayParticleMaterial);
-            scene.add(sprayParticles);
-            
-            // Animation function for particles
-            const animateParticles = (time, delta) => {
-                // Animate sand particles
-                const sandPositions = sandParticleGeometry.attributes.position.array;
-                for (let i = 0; i < sandParticleCount; i++) {
-                    // Make sand particles drift slightly
-                    sandPositions[i * 3] += Math.sin(time * 0.5 + i) * 0.01;
-                    sandPositions[i * 3 + 1] += Math.cos(time * 0.5 + i) * 0.005;
-                    
-                    // Reset particles that go too high
-                    if (sandPositions[i * 3 + 1] > 1.8) {
-                        sandPositions[i * 3 + 1] = 0.1;
-                    }
-                    
-                    // Make particles follow the player's z position
-                    sandPositions[i * 3 + 2] = (player.position.z + i * 10) % 1000 - 500;
-                }
-                sandParticleGeometry.attributes.position.needsUpdate = true;
-                
-                // Animate spray particles
-                const sprayPositions = sprayParticleGeometry.attributes.position.array;
-                for (let i = 0; i < sprayParticleCount; i++) {
-                    // Make spray particles rise and fall
-                    sprayPositions[i * 3 + 1] += 0.01 + Math.random() * 0.02;
-                    
-                    // Reset particles that go too high
-                    if (sprayPositions[i * 3 + 1] > 0.5) {
-                        sprayPositions[i * 3 + 1] = 0;
-                    }
-                    
-                    // Make particles follow the player's z position
-                    sprayPositions[i * 3 + 2] = (player.position.z + i * 10) % 1000 - 500;
-                }
-                sprayParticleGeometry.attributes.position.needsUpdate = true;
-            };
-            
-            return { animateParticles };
+            // Simplified - no particles
+            return { animateParticles: () => {} }; // Empty function as placeholder
         };
         const particles = createParticleSystems();
 
@@ -1344,9 +1629,7 @@
             requestAnimationFrame(animate);
 
             if (!gameActive) {
-                // Even when game is not active, animate environment elements
-                ocean.animateWaves(timestamp * 0.001);
-                particles.animateParticles(timestamp * 0.001, delta);
+                // Even when game is not active, render the scene
                 renderer.render(scene, camera);
                 return;
             }
@@ -1378,10 +1661,6 @@
             // Camera follow
             camera.position.set(player.position.x, player.position.y + 2, player.position.z - 5);
             camera.lookAt(player.position);
-
-            // Animate environment elements
-            ocean.animateWaves(timestamp * 0.001);
-            particles.animateParticles(timestamp * 0.001, delta);
 
             // Traffic movement
             trafficCars.forEach(car => {
