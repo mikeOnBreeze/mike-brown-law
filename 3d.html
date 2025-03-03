@@ -80,6 +80,47 @@
             padding-bottom: 56.25%;
         }
 
+        .hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #fff;
+            padding: 10px;
+            font-family: 'PixelFont', monospace;
+            z-index: 100;
+            width: 200px;
+            display: none;
+        }
+
+        .hud-item {
+            margin: 5px 0;
+            text-shadow: 2px 2px 0 #000;
+            font-size: 14px;
+        }
+
+        .speed {
+            color: #00ffff;
+        }
+
+        .score {
+            color: #ffff00;
+        }
+
+        .time {
+            color: #ffffff;
+        }
+
+        .flash {
+            animation: flash-text 0.2s linear;
+        }
+
+        @keyframes flash-text {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
         canvas {
             display: block;
             position: absolute;
@@ -320,6 +361,12 @@
             
             <canvas id="game-canvas"></canvas>
             
+            <div class="hud">
+                <div class="hud-item speed">SPEED: 0 MPH 🚗</div>
+                <div class="hud-item score">SCORE: 0</div>
+                <div class="hud-item time">TIME: 00:00</div>
+            </div>
+            
             <div class="scanlines"></div>
             <div class="crt-effect"></div>
             
@@ -391,6 +438,8 @@
         function startGame() {
             gameActive = true;
             gameMenu.style.display = 'none';
+            hud.style.display = 'block';
+            gameStartTime = Date.now();
             lastTailgaterTime = Date.now();
             // Ensure canvas is properly sized when game starts
             resizeCanvas();
@@ -419,12 +468,14 @@
             winScreen.style.display = 'none';
             loseScreen.style.display = 'none';
             gameMenu.style.display = 'flex';
+            hud.style.display = 'none';
             gameActive = false;
 
             // Reset player position and speed
             player.position.set(0, 0.25, 0);
             playerSpeed = 0;
-
+            score = 0;
+            
             // Reset traffic cars
             trafficCars.forEach(car => scene.remove(car.mesh));
             trafficCars.length = 0;
@@ -1629,6 +1680,39 @@
         // Controls
         const keys = { left: false, right: false, up: false, down: false };
         let playerSpeed = 0;
+        let score = 0;
+        let gameStartTime = 0;
+        const hud = document.querySelector('.hud');
+        const speedDisplay = document.querySelector('.speed');
+        const scoreDisplay = document.querySelector('.score');
+        const timeDisplay = document.querySelector('.time');
+
+        function updateHUD() {
+            // Update speed with flashing at max speed
+            const speedMph = Math.round(playerSpeed * 18); // Convert to MPH
+            speedDisplay.textContent = `SPEED: ${speedMph} MPH 🚗`;
+            if (playerSpeed >= 19.5) { // Near max speed
+                speedDisplay.classList.add('flash');
+            } else {
+                speedDisplay.classList.remove('flash');
+            }
+
+            // Update score
+            scoreDisplay.textContent = `SCORE: ${score}`;
+
+            // Update time
+            const currentTime = Date.now();
+            const elapsedSeconds = Math.floor((currentTime - gameStartTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            timeDisplay.textContent = `TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function addPoints(points) {
+            score += points;
+            scoreDisplay.classList.add('flash');
+            setTimeout(() => scoreDisplay.classList.remove('flash'), 200);
+        }
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') keys.left = true;
@@ -1781,6 +1865,8 @@
                         car.mesh.position.x = lane * 2;
                         car.targetLane = lane;
                         car.changingLane = false;
+                        // Add points for avoiding aggressive driver
+                        addPoints(50);
                     }
                 } else {
                     // Regular traffic car logic
@@ -1788,6 +1874,8 @@
                         car.mesh.position.z = player.position.z + 500;
                         const lane = Math.floor(Math.random() * 3) - 1;
                         car.mesh.position.x = lane * 2;
+                        // Add points for passing regular car
+                        addPoints(10);
                     }
                 }
             });
@@ -1811,6 +1899,8 @@
                     gameActive = false;
                 }
             });
+
+            updateHUD();
 
             renderer.render(scene, camera);
         }
