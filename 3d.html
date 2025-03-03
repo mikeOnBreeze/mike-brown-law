@@ -422,8 +422,23 @@
 
         // Variables for tailgater timing and delta time
         let lastTailgaterTime = 0;
-        const tailgaterInterval = 5000; // 5 seconds (half of original 10 seconds)
+        let tailgaterInterval = 8000; // Start with 8 seconds between tailgaters
         let lastTime = 0;
+        let difficulty = 0; // Difficulty level from 0 to 1 (0 = easy, 1 = impossible)
+        let difficultyUpdateTime = 0; // Time of last difficulty update
+        
+        // Difficulty settings
+        const difficultySettings = {
+            initialTailgaterInterval: 8000, // 8 seconds at start
+            finalTailgaterInterval: 1000,   // 1 second at max difficulty
+            initialTailgaterSpeed: 24,      // Initial tailgater speed
+            finalTailgaterSpeed: 40,        // Max tailgater speed
+            initialLaneChangeSpeed: 15,     // Initial lane change speed
+            finalLaneChangeSpeed: 25,       // Max lane change speed
+            maxDifficultyTime: 90000,       // 90 seconds to reach max difficulty
+            multiSpawnThreshold: 0.7,       // When difficulty > 0.7, chance for multiple tailgaters
+            targetPlayerThreshold: 0.5      // When difficulty > 0.5, tailgaters target player's lane
+        };
 
         // Button event listeners
         document.getElementById('start-game').addEventListener('click', startGame);
@@ -441,6 +456,8 @@
             hud.style.display = 'block';
             gameStartTime = Date.now();
             lastTailgaterTime = Date.now();
+            difficulty = 0; // Reset difficulty
+            difficultyUpdateTime = Date.now(); // Initialize difficulty update time
             // Ensure canvas is properly sized when game starts
             resizeCanvas();
             // Start the game immediately
@@ -475,6 +492,11 @@
             player.position.set(0, 0.25, 0);
             playerSpeed = 0;
             score = 0;
+            
+            // Reset difficulty
+            difficulty = 0;
+            tailgaterInterval = difficultySettings.initialTailgaterInterval;
+            timeDisplay.style.color = '#ffffff'; // Reset time display color
             
             // Reset traffic cars
             trafficCars.forEach(car => scene.remove(car.mesh));
@@ -1021,22 +1043,84 @@
         }
 
         function spawnTailgater() {
-            const lane = Math.floor(Math.random() * 3) - 1;
+            // Determine which lane to spawn in based on difficulty
+            let lane;
+            
+            if (difficulty > difficultySettings.targetPlayerThreshold) {
+                // As difficulty increases, tailgaters are more likely to spawn in player's lane
+                const playerLane = Math.round(player.position.x / 2);
+                const targetPlayerChance = Math.min(0.8, 0.4 + (difficulty - 0.5) * 0.8); // 40% to 80% chance to target player
+                
+                if (Math.random() < targetPlayerChance) {
+                    // Target player's lane
+                    lane = playerLane;
+                } else {
+                    // Random lane
+                    lane = Math.floor(Math.random() * 3) - 1;
+                }
+            } else {
+                // Random lane at lower difficulties
+                lane = Math.floor(Math.random() * 3) - 1;
+            }
+            
             const x = lane * 2;
             const z = player.position.z - 20;
+            
+            // Calculate tailgater speed based on difficulty
+            const tailgaterSpeed = difficultySettings.initialTailgaterSpeed + 
+                (difficultySettings.finalTailgaterSpeed - difficultySettings.initialTailgaterSpeed) * difficulty;
+                
+            // Calculate lane change speed based on difficulty
+            const laneChangeSpeed = difficultySettings.initialLaneChangeSpeed + 
+                (difficultySettings.finalLaneChangeSpeed - difficultySettings.initialLaneChangeSpeed) * difficulty;
+            
+            // Create the tailgater car
             const car = createCarModel(0xff3300);
             car.position.set(x, 0.25, z);
             scene.add(car);
+            
             trafficCars.push({ 
                 mesh: car, 
-                speed: 24, 
+                speed: tailgaterSpeed, 
                 isTailgater: true,
                 targetLane: lane,
                 changingLane: false,
                 laneChangeDirection: 0,
-                laneChangeSpeed: 15,
-                passed: false // Track if this tailgater has been passed
+                laneChangeSpeed: laneChangeSpeed,
+                passed: false, // Track if this tailgater has been passed
+                spawnTime: Date.now() // Track when this tailgater was spawned
             });
+            
+            // At higher difficulties, spawn multiple tailgaters at once
+            if (difficulty > difficultySettings.multiSpawnThreshold) {
+                const multiSpawnChance = (difficulty - difficultySettings.multiSpawnThreshold) * 2; // 0% to 60% chance
+                
+                if (Math.random() < multiSpawnChance) {
+                    // Spawn a second tailgater in a different lane after a short delay
+                    setTimeout(() => {
+                        if (gameActive) {
+                            const secondLane = (lane + (Math.random() > 0.5 ? 1 : -1)) % 3;
+                            const adjustedLane = secondLane > 1 ? -1 : (secondLane < -1 ? 1 : secondLane);
+                            
+                            const secondCar = createCarModel(0xff3300);
+                            secondCar.position.set(adjustedLane * 2, 0.25, player.position.z - 25);
+                            scene.add(secondCar);
+                            
+                            trafficCars.push({ 
+                                mesh: secondCar, 
+                                speed: tailgaterSpeed * 1.1, // Slightly faster
+                                isTailgater: true,
+                                targetLane: adjustedLane,
+                                changingLane: false,
+                                laneChangeDirection: 0,
+                                laneChangeSpeed: laneChangeSpeed,
+                                passed: false,
+                                spawnTime: Date.now()
+                            });
+                        }
+                    }, 500); // Spawn second tailgater after 0.5 seconds
+                }
+            }
         }
 
         // Scenery
@@ -1704,12 +1788,23 @@
             // Update score
             scoreDisplay.textContent = `SCORE: ${score}`;
 
-            // Update time
+            // Update time and add difficulty indicator
             const currentTime = Date.now();
             const elapsedSeconds = Math.floor((currentTime - gameStartTime) / 1000);
             const minutes = Math.floor(elapsedSeconds / 60);
             const seconds = elapsedSeconds % 60;
-            timeDisplay.textContent = `TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Add difficulty indicator based on current level
+            let difficultyIndicator = '';
+            if (difficulty > 0.9) {
+                difficultyIndicator = ' ⚠️⚠️⚠️'; // Triple warning at near-impossible
+            } else if (difficulty > 0.7) {
+                difficultyIndicator = ' ⚠️⚠️'; // Double warning at very hard
+            } else if (difficulty > 0.5) {
+                difficultyIndicator = ' ⚠️'; // Single warning at medium-hard
+            }
+            
+            timeDisplay.textContent = `TIME: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}${difficultyIndicator}`;
         }
 
         function addPoints(points) {
@@ -1837,6 +1932,41 @@
                 renderer.render(scene, camera);
                 return;
             }
+            
+            // Calculate difficulty based on elapsed time
+            const elapsedTime = Date.now() - gameStartTime;
+            difficulty = Math.min(1.0, elapsedTime / difficultySettings.maxDifficultyTime);
+            
+            // Update tailgater interval based on difficulty
+            tailgaterInterval = difficultySettings.initialTailgaterInterval - 
+                (difficultySettings.initialTailgaterInterval - difficultySettings.finalTailgaterInterval) * difficulty;
+            
+            // Visual feedback for increasing difficulty (update every 10 seconds)
+            if (Date.now() - difficultyUpdateTime > 10000) {
+                difficultyUpdateTime = Date.now();
+                
+                // Flash HUD when difficulty increases
+                if (difficulty > 0.3) {
+                    speedDisplay.classList.add('flash');
+                    scoreDisplay.classList.add('flash');
+                    timeDisplay.classList.add('flash');
+                    
+                    setTimeout(() => {
+                        speedDisplay.classList.remove('flash');
+                        scoreDisplay.classList.remove('flash');
+                        timeDisplay.classList.remove('flash');
+                    }, 500);
+                }
+                
+                // Change HUD color based on difficulty
+                if (difficulty > 0.7) {
+                    // Red for high difficulty
+                    timeDisplay.style.color = '#ff3333';
+                } else if (difficulty > 0.4) {
+                    // Yellow for medium difficulty
+                    timeDisplay.style.color = '#ffff33';
+                }
+            }
 
             // Player movement
             const laneChangeSpeed = 10; // units per second
@@ -1955,6 +2085,18 @@
                         }
                     }
                     
+                    // At high difficulty, make tailgaters more aggressive by targeting player's lane
+                    if (difficulty > 0.6 && !car.changingLane && Math.random() < 0.05) {
+                        const playerLane = Math.round(player.position.x / 2);
+                        const currentLane = Math.round(car.mesh.position.x / 2);
+                        
+                        if (playerLane !== currentLane) {
+                            car.targetLane = playerLane;
+                            car.changingLane = true;
+                            car.laneChangeDirection = playerLane > currentLane ? 1 : -1;
+                        }
+                    }
+                    
                     // Reset tailgater if it gets too far ahead
                     if (car.mesh.position.z > player.position.z + 50) {
                         car.mesh.position.z = player.position.z - 500;
@@ -1983,10 +2125,21 @@
                 }
             });
 
-            // Spawn tailgater every 5 seconds
+            // Spawn tailgater based on dynamic interval
             if (gameActive && Date.now() - lastTailgaterTime > tailgaterInterval) {
                 spawnTailgater();
                 lastTailgaterTime = Date.now();
+                
+                // At high difficulty, chance to spawn additional tailgaters in quick succession
+                if (difficulty > 0.8 && Math.random() < 0.3) {
+                    // Schedule another tailgater to spawn very soon
+                    setTimeout(() => {
+                        if (gameActive) {
+                            spawnTailgater();
+                            lastTailgaterTime = Date.now();
+                        }
+                    }, 500 + Math.random() * 1000); // 0.5-1.5 seconds later
+                }
             }
 
             // Collision check (rear-end only) - updated for car models
