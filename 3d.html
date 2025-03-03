@@ -538,7 +538,7 @@
                 exponent: { value: 0.5 }  // Slightly softer transition
             };
             
-            const skyGeo = new THREE.SphereGeometry(900, 32, 15);
+            const skyGeo = new THREE.SphereGeometry(1000, 32, 15);
             const skyMat = new THREE.ShaderMaterial({
                 uniforms: uniforms,
                 vertexShader: vertexShader,
@@ -546,7 +546,8 @@
                 side: THREE.BackSide
             });
             
-            const sky = new THREE.Mesh(skyGeo, skyMat);
+            const sky = new THREE.Mesh(skyGeo, skyMat)
+            sky.position.set(0, 0, 900);
             scene.add(sky);
             
             // Add a sun
@@ -577,7 +578,7 @@
         };
         createSkybox();
 
-        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000); // Initial aspect ratio will be updated
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 2000); // Initial aspect ratio will be updated
         const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
         
         // Function to handle responsive canvas
