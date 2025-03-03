@@ -1,0 +1,330 @@
+@font-face {
+    font-family: 'PixelFont';
+    src: url('https://cdnjs.cloudflare.com/ajax/libs/press-start-2p/0.93/PressStart2P-Regular.woff') format('woff');
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #000;
+    font-family: 'PixelFont', monospace;
+    overflow-x: hidden;
+    color: #fff;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.genesis-header {
+    background: linear-gradient(to right, #0a0240, #2a0d99, #4016d0);
+    border-bottom: 4px solid #fff;
+    padding: 20px 0;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.genesis-header h1 {
+    color: #ffd700;
+    font-size: 2.5em;
+    margin: 0;
+    text-shadow: 4px 4px 0px #f00, 
+                 -4px -4px 0px #00f;
+    letter-spacing: 2px;
+    position: relative;
+}
+
+.genesis-header .shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50px;
+    height: 100%;
+    background: linear-gradient(to right, 
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.8) 50%,
+        rgba(255,255,255,0) 100%);
+    animation: shine 3s infinite;
+    transform: skewX(-20deg);
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    100% { left: 200%; }
+}
+
+.game-container {
+    margin: 20px auto;
+    position: relative;
+    border: 8px solid #333;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    background-color: #222;
+    overflow: hidden;
+    width: 100%;
+    max-width: 900px;
+    height: 0;
+    padding-bottom: 56.25%;
+}
+
+.hud {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #fff;
+    padding: 10px;
+    font-family: 'PixelFont', monospace;
+    z-index: 100;
+    width: 200px;
+    display: none;
+}
+
+.hud-item {
+    margin: 5px 0;
+    text-shadow: 2px 2px 0 #000;
+    font-size: 14px;
+}
+
+.speed {
+    color: #00ffff;
+}
+
+.score {
+    color: #ffff00;
+}
+
+.time {
+    color: #ffffff;
+}
+
+.flash {
+    animation: flash-text 0.2s linear;
+}
+
+@keyframes flash-text {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #222;
+}
+
+.controls {
+    background-color: #222;
+    border: 4px solid #444;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.8em;
+    color: #0f0;
+    border-radius: 4px;
+}
+
+.sega-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: linear-gradient(to bottom, #ff0000, #aa0000);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-family: 'PixelFont', monospace;
+    font-size: 1em;
+    cursor: pointer;
+    margin: 10px;
+    text-decoration: none;
+    text-align: center;
+    box-shadow: 0 4px 0 #880000;
+    text-transform: uppercase;
+    transition: all 0.1s;
+}
+
+.sega-button:hover {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #880000;
+}
+
+.sega-button:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    font-size: 0.7em;
+    color: #888;
+    border-top: 2px solid #333;
+}
+
+.game-menu, .decision-screen, .win-screen, .lose-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 12;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.game-menu {
+    background-color: rgba(0,0,40,0.85);
+    display: flex; /* This one starts visible */
+}
+
+.decision-screen {
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 10;
+}
+
+.win-screen {
+    background-color: rgba(0, 100, 0, 0.9);
+    z-index: 11;
+}
+
+.lose-screen {
+    background-color: rgba(100, 0, 0, 0.9);
+    z-index: 11;
+}
+
+.decision-title {
+    color: #ff0;
+    font-size: 24px;
+    margin-bottom: 30px;
+    text-align: center;
+    text-shadow: 2px 2px 0 #f00;
+}
+
+.decision-options {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.win-title, .lose-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.win-title {
+    color: gold;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.lose-title {
+    color: #f44;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.menu-logo {
+    margin-bottom: 40px;
+}
+
+.menu-options {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.crt-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 14;
+    box-shadow: inset 0 0 100px rgba(0, 30, 60, 0.5);
+    border-radius: 10px;
+}
+
+.pixelated-car {
+    image-rendering: pixelated;
+    width: 120px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.denied-stamp {
+    color: red;
+    font-size: 48px;
+    font-weight: bold;
+    border: 5px solid red;
+    padding: 5px 15px;
+    transform: rotate(-15deg);
+    margin: 20px;
+}
+
+.gold-check {
+    font-size: 24px;
+    color: gold;
+    border: 3px solid gold;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    margin: 20px;
+}
+
+.call-button {
+    background: linear-gradient(to bottom, #ffd700, #b8860b);
+    color: #000;
+    padding: 15px 30px;
+    font-size: 20px;
+    margin-top: 30px;
+    box-shadow: 0 6px 0 #8b6914;
+}
+
+.retry-button {
+    background: linear-gradient(to bottom, #4444ff, #2222aa);
+    padding: 10px 20px;
+    margin-top: 20px;
+}
+
+.game-title-animation {
+    font-size: 36px;
+    color: yellow;
+    text-shadow: 4px 4px 0 #f00;
+    margin-bottom: 30px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+} 

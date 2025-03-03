@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FENDER BENDER DEFENDER - Mike Brown Law</title>
+    <!-- Updated version with fixed black viewer strip and improved building details -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="genesis-header">
+        <div class="shine"></div>
+        <h1>MIKE BROWN LAW</h1>
+        <div style="color: #0f0; margin-top: 5px; font-size: 18px;">ORANGE COUNTY PERSONAL INJURY</div>
+    </div>
+
+    <div class="container">
+        <div class="game-container">
+            <div class="game-menu">
+                <div class="game-title-animation">FENDER BENDER DEFENDER</div>
+                <div class="menu-options">
+                    <button id="start-game" class="sega-button">START GAME</button>
+                    <button id="how-to-play" class="sega-button">HOW TO PLAY</button>
+                </div>
+            </div>
+            
+            <canvas id="game-canvas"></canvas>
+            
+            <div class="hud">
+                <div class="hud-item speed">SPEED: 0 MPH 🚗</div>
+                <div class="hud-item score">SCORE: 0</div>
+                <div class="hud-item time">TIME: 00:00</div>
+            </div>
+            
+            <div class="scanlines"></div>
+            <div class="crt-effect"></div>
+            
+            <div class="decision-screen">
+                <div class="decision-title">YOU'VE BEEN REAR-ENDED!</div>
+                <div class="decision-options">
+                    <button id="call-lawyer" class="sega-button">CALL MIKE BROWN LAW</button>
+                    <button id="self-handle" class="sega-button">HANDLE IT YOURSELF</button>
+                </div>
+            </div>
+            
+            <div class="win-screen">
+                <div class="win-title">CONGRATULATIONS!</div>
+                <div class="gold-check">CASE HANDLED!</div>
+                <div>Fender Bender? No Headaches!</div>
+                <div style="margin-top: 20px;">Your case was handled by PROFESSIONALS!</div>
+                <button id="call-now" class="sega-button call-button">CALL MIKE BROWN LAW WITH YOUR REAL CASE</button>
+                <button id="play-again-win" class="sega-button retry-button">PLAY AGAIN</button>
+            </div>
+            
+            <div class="lose-screen">
+                <div class="lose-title">CLAIM REJECTED</div>
+                <div class="denied-stamp">DENIED</div>
+                <div>Insurance companies WIN when you don't have a lawyer!</div>
+                <div style="margin-top: 20px; color: #f88;">Don't get screwed - get legal help!</div>
+                <button id="call-after-loss" class="sega-button call-button">CALL MIKE BROWN LAW WITH YOUR REAL CASE</button>
+                <button id="play-again-lose" class="sega-button retry-button">TRY AGAIN</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <p>CONTROLS: ← → ARROW KEYS TO MOVE • UP ARROW TO ACCELERATE • DOWN ARROW TO BRAKE</p>
+            <div>
+                <button id="toggle-fullscreen" class="sega-button">FULLSCREEN</button>
+                <button id="toggle-sound" class="sega-button">SOUND: ON</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2025 MIKE BROWN LAW - THIS GAME IS PROVIDED FOR ENTERTAINMENT PURPOSES ONLY AND IS NOT LEGAL ADVICE
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
