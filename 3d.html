@@ -530,12 +530,12 @@
                 }
             `;
             
-            // Create shader material with California sunset colors
+            // Create shader material with more blue-dominant sunset colors
             const uniforms = {
-                topColor: { value: new THREE.Color(0x1E90FF) },  // Deep blue at top
-                bottomColor: { value: new THREE.Color(0xFF8C00) }, // Orange sunset at horizon
+                topColor: { value: new THREE.Color(0x0D47A1) },  // Deep navy blue at top
+                bottomColor: { value: new THREE.Color(0x90CAF9) }, // Light blue with just a hint of pink at horizon
                 offset: { value: 10 },
-                exponent: { value: 0.6 }
+                exponent: { value: 0.5 }  // Slightly softer transition
             };
             
             const skyGeo = new THREE.SphereGeometry(900, 32, 15);
@@ -551,8 +551,9 @@
             
             // Add a sun
             const sunGeometry = new THREE.CircleGeometry(40, 32);
+            // Update the sun to a softer yellow
             const sunMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xffdd00,
+                color: 0xFFF176, // Soft yellow
                 transparent: true,
                 opacity: 0.8
             });
@@ -563,8 +564,9 @@
             
             // Add sun rays/glow
             const glowGeometry = new THREE.CircleGeometry(60, 32);
+            // And a more subtle glow
             const glowMaterial = new THREE.MeshBasicMaterial({
-                color: 0xff8800,
+                color: 0xFFCC80, // Soft orange glow
                 transparent: true,
                 opacity: 0.4
             });
@@ -665,7 +667,7 @@
             // Left side (mountain/hill side) - from player's perspective
             const leftTerrainGeometry = new THREE.PlaneGeometry(100, 10000);
             const leftTerrainMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x8B6914, // Darker earth color for hills
+                color: 0x4CAF50, // Darker earth color for hills
                 roughness: 1.0,
                 metalness: 0.0
             });
@@ -710,7 +712,7 @@
                 // Create a simple mountain shape
                 const mountainGeometry = new THREE.ConeGeometry(width, height, 4);
                 const mountainMaterial = new THREE.MeshStandardMaterial({
-                    color: 0x8b4513, // Brown
+                    color: 0x6A5ACD, // slate blue
                     roughness: 1.0,
                     metalness: 0.0
                 });
@@ -1690,9 +1692,9 @@
 
         function updateHUD() {
             // Update speed with flashing at max speed
-            const speedMph = Math.round(playerSpeed * 18); // Convert to MPH
+            const speedMph = Math.round(playerSpeed * 3.95); // Convert to MPH (79 MPH at max speed of 20)
             speedDisplay.textContent = `SPEED: ${speedMph} MPH 🚗`;
-            if (playerSpeed >= 19.5) { // Near max speed
+            if (playerSpeed >= 19) { // Near max speed
                 speedDisplay.classList.add('flash');
             } else {
                 speedDisplay.classList.remove('flash');
@@ -1727,6 +1729,92 @@
             if (e.key === 'ArrowUp') keys.up = false;
             if (e.key === 'ArrowDown') keys.down = false;
         });
+
+        // Add simple clouds that are visible from the player's perspective but spread widely
+        const createSimpleClouds = () => {
+            const clouds = [];
+            
+            // Create more clouds (12-15) to spread across a wider area
+            const cloudCount = 12 + Math.floor(Math.random() * 4);
+            
+            for (let i = 0; i < cloudCount; i++) {
+                // Create a simple cloud using just 3-4 spheres
+                const cloud = new THREE.Group();
+                
+                // Simple white material
+                const cloudMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                // Create 3-4 overlapping spheres for each cloud
+                const puffCount = 3 + Math.floor(Math.random() * 2);
+                for (let j = 0; j < puffCount; j++) {
+                    const radius = 2 + Math.random() * 1.5;
+                    const geometry = new THREE.SphereGeometry(radius, 8, 8);
+                    const puff = new THREE.Mesh(geometry, cloudMaterial);
+                    
+                    // Position each puff slightly offset from center
+                    puff.position.set(
+                        (j - puffCount/2) * 1.5,
+                        Math.random() * 0.5,
+                        Math.random() * 0.5
+                    );
+                    
+                    cloud.add(puff);
+                }
+                
+                // Determine if cloud should be on left (buildings) or right (ocean) side
+                let xPos;
+                if (Math.random() < 0.5) {
+                    // Right side (ocean side) - spread widely
+                    xPos = -40 - Math.random() * 80;
+                } else {
+                    // Left side (buildings side) - spread widely
+                    xPos = 40 + Math.random() * 80;
+                }
+                
+                // Position clouds in the sky where they'll be visible from the car
+                // Place them high up and at varying distances ahead
+                cloud.position.set(
+                    xPos,  // Spread far to the sides
+                    30 + Math.random() * 20,   // Higher in the sky
+                    -200 + i * 150 + Math.random() * 100  // Staggered ahead and behind
+                );
+                
+                // Scale the cloud - larger for distant clouds
+                const scale = 4 + Math.random() * 4;
+                cloud.scale.set(scale, scale * 0.7, scale); // Slightly flatter clouds
+                
+                scene.add(cloud);
+                clouds.push(cloud);
+            }
+            
+            // Return a simple animation function
+            return {
+                animateClouds: (delta, playerZ) => {
+                    clouds.forEach(cloud => {
+                        // Move clouds very slowly to the side for subtle effect
+                        cloud.position.x += 0.05 * delta;
+                        
+                        // If cloud moves too far, reset to the other side
+                        if (cloud.position.x > 120) {
+                            cloud.position.x = -120;
+                        }
+                        
+                        // Keep clouds distributed ahead and behind the player as they move
+                        if (cloud.position.z < playerZ - 500) {
+                            cloud.position.z = playerZ + 500 + Math.random() * 200;
+                        } else if (cloud.position.z > playerZ + 700) {
+                            cloud.position.z = playerZ - 300 - Math.random() * 200;
+                        }
+                    });
+                }
+            };
+        };
+
+        const simpleClouds = createSimpleClouds();
 
         // Game loop
         function animate(timestamp = 0) {
@@ -1915,6 +2003,11 @@
             });
 
             updateHUD();
+
+            // Animate simple clouds - pass player position to keep clouds ahead
+            if (gameActive) {
+                simpleClouds.animateClouds(delta, player.position.z);
+            }
 
             renderer.render(scene, camera);
         }
