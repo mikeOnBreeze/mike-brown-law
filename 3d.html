@@ -1031,7 +1031,8 @@
                 targetLane: lane,
                 changingLane: false,
                 laneChangeDirection: 0,
-                laneChangeSpeed: 15
+                laneChangeSpeed: 15,
+                passed: false // Track if this tailgater has been passed
             });
         }
 
@@ -1798,6 +1799,13 @@
                     let obstacleDistance = 0;
                     let obstacleLane = 0;
                     
+                    // Check if tailgater has passed the player and award points
+                    if (car.mesh.position.z > player.position.z && !car.passed && playerSpeed > 0) {
+                        // Add points for avoiding aggressive driver
+                        addPoints(50);
+                        car.passed = true;
+                    }
+                    
                     // Look for obstacles in front of tailgater
                     trafficCars.forEach(otherCar => {
                         if (otherCar !== car && !otherCar.isTailgater) {
@@ -1865,17 +1873,23 @@
                         car.mesh.position.x = lane * 2;
                         car.targetLane = lane;
                         car.changingLane = false;
-                        // Add points for avoiding aggressive driver
-                        addPoints(50);
+                        car.passed = false; // Reset passed status for reuse
                     }
                 } else {
                     // Regular traffic car logic
+                    // Check if player has passed this car
+                    if (car.mesh.position.z < player.position.z && !car.passed && playerSpeed > 0) {
+                        // Add points for passing regular car
+                        addPoints(10);
+                        car.passed = true;
+                    }
+                    
+                    // Reposition car if it's too far behind
                     if (car.mesh.position.z < player.position.z - 50) {
                         car.mesh.position.z = player.position.z + 500;
                         const lane = Math.floor(Math.random() * 3) - 1;
                         car.mesh.position.x = lane * 2;
-                        // Add points for passing regular car
-                        addPoints(10);
+                        car.passed = false; // Reset passed status for reuse
                     }
                 }
             });
