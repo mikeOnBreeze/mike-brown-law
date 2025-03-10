@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>FENDER BENDER DEFENDER - Mike Brown Law</title>
     <!-- Updated version with fixed black viewer strip and improved building details -->
     <link rel="stylesheet" href="css/styles.css">
@@ -25,6 +28,15 @@
             </div>
             
             <canvas id="game-canvas"></canvas>
+            
+            <div class="orientation-message">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12" y2="18"></line>
+                </svg>
+                <p>Please rotate your device to landscape mode for the best experience</p>
+                <button class="dismiss-button">I understand, continue anyway</button>
+            </div>
             
             <div class="hud">
                 <div class="hud-item speed">SPEED: 0 MPH 🚗</div>

@@ -327,4 +327,326 @@ canvas {
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
+}
+
+/* Mobile Controls */
+.mobile-control {
+    position: absolute;
+    bottom: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: white;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 100;
+}
+
+.left-control {
+    left: 30px;
+}
+
+.right-control {
+    right: 30px;
+}
+
+.fullscreen-control {
+    top: 30px;
+    right: 30px;
+    background-color: rgba(0, 0, 0, 0.5);
+    font-size: 20px;
+}
+
+/* Optional: make controls glow when active */
+.mobile-control:active {
+    background-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+
+/* Hide controls on larger screens if desired */
+@media (min-width: 992px) {
+    .mobile-control {
+        display: none;
+    }
+}
+
+/* Common mobile optimizations */
+.game-container, .hud, .mobile-control, .sega-button, .game-menu, .decision-screen, .win-screen, .lose-screen {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: manipulation;
+}
+
+/* Orientation message overlay */
+.orientation-message {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 40, 0.9);
+    z-index: 1000;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    color: white;
+    font-family: 'PixelFont', monospace;
+}
+
+.orientation-message img {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    animation: rotate 2s infinite;
+}
+
+.orientation-message p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.dismiss-button {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: 2px solid white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-family: 'PixelFont', monospace;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(90deg); }
+    100% { transform: rotate(90deg); }
+}
+
+/* Mobile HUD positioning */
+@media (max-width: 768px) {
+    .hud {
+        bottom: auto;
+        top: 10px;
+        left: 10px;
+        width: auto;
+        display: flex;
+        flex-direction: column;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 5px;
+        padding: 5px;
+        font-size: 12px;
+    }
+    
+    .hud-item {
+        margin: 2px 0;
+        font-size: 12px;
+    }
+    
+    /* Enhanced mobile control buttons */
+    .mobile-control {
+        width: 80px;  /* Larger visible area */
+        height: 80px;
+        bottom: 50px; /* Higher position to avoid accidental browser UI triggering */
+    }
+    
+    .left-control {
+        left: 20px;
+    }
+    
+    .right-control {
+        right: 20px;
+    }
+    
+    /* Create larger touch area beyond visual buttons */
+    .mobile-control::after {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: -20px;
+        bottom: -20px;
+        z-index: -1;
+    }
+}
+
+/* Portrait orientation detection */
+@media (max-width: 768px) and (orientation: portrait) {
+    .orientation-message {
+        display: flex;
+    }
+}
+
+/* Fullscreen mode adjustments */
+.fullscreen-active .mobile-control {
+    bottom: 70px; /* Move buttons higher in fullscreen mode to avoid OS gestures */
+}
+
+.fullscreen-active .hud {
+    top: 20px; /* Move HUD down slightly in fullscreen mode */
+}
+
+/* Enhanced fullscreen mode */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Only prevent scrolling when in fullscreen mode */
+body.fullscreen-active, 
+html.fullscreen-active {
+    overflow: hidden !important;
+}
+
+body.ios-fullscreen {
+    /* iOS fullscreen mode - handle notches and home indicator */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow: hidden; /* Prevent scrolling only in iOS fullscreen */
+}
+
+/* iOS standalone mode (launched from home screen) */
+@media (display-mode: standalone) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+.fullscreen-active {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: -webkit-fill-available !important; /* iOS Safari fix */
+    max-width: 100% !important;
+    max-height: 100% !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background-color: #000 !important;
+}
+
+/* Game container in fullscreen */
+.fullscreen-active.game-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Canvas in fullscreen mode */
+.fullscreen-active canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+}
+
+/* HUD positioning in fullscreen mode */
+.fullscreen-active .hud {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    z-index: 10000;
+}
+
+/* Mobile controls in fullscreen */
+.fullscreen-active .mobile-control {
+    position: fixed;
+    z-index: 10000;
+    bottom: max(70px, env(safe-area-inset-bottom) + 20px);
+}
+
+.fullscreen-active .left-control {
+    left: max(20px, env(safe-area-inset-left) + 10px);
+}
+
+.fullscreen-active .right-control {
+    right: max(20px, env(safe-area-inset-right) + 10px);
+}
+
+/* Portrait mode control positioning */
+@media (orientation: portrait) {
+    /* Make controls bigger and reposition for portrait */
+    .mobile-control {
+        width: 70px;
+        height: 70px;
+    }
+    
+    /* Position controls at the bottom corners */
+    .left-control {
+        left: 15px;
+        bottom: 100px;
+    }
+    
+    .right-control {
+        right: 15px;
+        bottom: 100px;
+    }
+    
+    /* Position fullscreen control */
+    .fullscreen-control {
+        top: 15px;
+        right: 15px;
+    }
+    
+    /* Make HUD more compact in portrait */
+    .hud {
+        position: absolute !important;
+        top: 15px !important;
+        left: 15px !important;
+        bottom: auto !important; /* Override bottom positioning from base styles */
+        width: auto !important; /* Let width be determined by content */
+        height: auto !important; /* Let height be determined by content */
+        padding: 3px 5px !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        max-width: 40% !important; /* Ensure it doesn't get too wide */
+        max-height: none !important; /* Remove any max-height restrictions */
+    }
+    
+    .hud-item {
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* Fullscreen active in portrait mode */
+.fullscreen-active.portrait-mode .left-control {
+    bottom: max(100px, env(safe-area-inset-bottom) + 50px);
+}
+
+.fullscreen-active.portrait-mode .right-control {
+    bottom: max(100px, env(safe-area-inset-bottom) + 50px);
+}
+
+/* Mobile landscape mode - make HUD box fit content */
+@media (orientation: landscape) and (max-width: 768px) {
+    .hud {
+        width: auto !important; /* Only as wide as needed */
+        height: auto !important; /* Only as tall as needed */
+        display: inline-block !important; /* Shrink to content */
+        padding: 5px !important; /* Small padding */
+        position: absolute !important; /* Ensure proper positioning */
+        top: 10px !important;
+        left: 10px !important;
+        box-sizing: content-box !important; /* Don't include padding in size calculation */
+    }
 } 

@@ -1,11 +1,24 @@
 // Game state
 let gameActive = false;
 let soundOn = true;
+let playerSpeed = 0; // Player car speed
+const keys = { left: false, right: false, up: false, down: false }; // Control keys
 const gameMenu = document.querySelector('.game-menu');
 const canvas = document.getElementById('game-canvas');
 const decisionScreen = document.querySelector('.decision-screen');
 const winScreen = document.querySelector('.win-screen');
 const loseScreen = document.querySelector('.lose-screen');
+let isMobileDevice = false; // Flag for mobile device detection
+
+// Function to detect if the device is a mobile device
+function detectMobile() {
+    return (('ontouchstart' in window) || 
+            (navigator.maxTouchPoints > 0) || 
+            (navigator.msMaxTouchPoints > 0));
+}
+
+// Check if this is a mobile device
+isMobileDevice = detectMobile();
 
 // Variables for tailgater timing and delta time
 let lastTailgaterTime = 0;
@@ -30,12 +43,360 @@ const difficultySettings = {
 // Button event listeners
 document.getElementById('start-game').addEventListener('click', startGame);
 document.getElementById('how-to-play').addEventListener('click', showHowToPlay);
-document.getElementById('call-lawyer').addEventListener('click', () => showWinScreen());
-document.getElementById('self-handle').addEventListener('click', () => showLoseScreen());
+document.getElementById('call-lawyer').addEventListener('click', showWinScreen);
+document.getElementById('self-handle').addEventListener('click', showLoseScreen);
 document.getElementById('play-again-win').addEventListener('click', resetGame);
 document.getElementById('play-again-lose').addEventListener('click', resetGame);
 document.getElementById('toggle-sound').addEventListener('click', toggleSound);
 document.getElementById('toggle-fullscreen').addEventListener('click', toggleFullscreen);
+
+// Mobile controls
+function addMobileControls() {
+    const gameContainer = document.querySelector('.game-container');
+    
+    // Create left control button
+    const leftButton = document.createElement('div');
+    leftButton.className = 'mobile-control left-control';
+    leftButton.innerHTML = '◀';
+    
+    // Create right control button
+    const rightButton = document.createElement('div');
+    rightButton.className = 'mobile-control right-control';
+    rightButton.innerHTML = '▶';
+    
+    // Add a fullscreen toggle button for mobile
+    if (isMobileDevice) {
+        const fullscreenButton = document.createElement('div');
+        fullscreenButton.className = 'mobile-control fullscreen-control';
+        fullscreenButton.innerHTML = '⛶'; // Expand icon
+        fullscreenButton.id = 'mobile-fullscreen-toggle';
+        
+        // Toggle fullscreen when button is pressed
+        fullscreenButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            requestFullscreenMode(); // This will toggle fullscreen mode
+            updateFullscreenButtonIcon();
+        });
+        
+        fullscreenButton.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            requestFullscreenMode(); // This will toggle fullscreen mode
+            updateFullscreenButtonIcon();
+        });
+        
+        gameContainer.appendChild(fullscreenButton);
+    }
+    
+    // Add buttons to the game container
+    gameContainer.appendChild(leftButton);
+    gameContainer.appendChild(rightButton);
+    
+    // Add touch event listeners
+    leftButton.addEventListener('touchstart', () => keys.left = true);
+    leftButton.addEventListener('touchend', () => keys.left = false);
+    rightButton.addEventListener('touchstart', () => keys.right = true);
+    rightButton.addEventListener('touchend', () => keys.right = false);
+    
+    // Add mouse event listeners for testing on desktop
+    leftButton.addEventListener('mousedown', () => keys.left = true);
+    leftButton.addEventListener('mouseup', () => keys.left = false);
+    rightButton.addEventListener('mousedown', () => keys.right = true);
+    rightButton.addEventListener('mouseup', () => keys.right = false);
+}
+
+// Update the fullscreen button icon based on current state
+function updateFullscreenButtonIcon() {
+    const fullscreenButton = document.getElementById('mobile-fullscreen-toggle');
+    if (!fullscreenButton) return;
+    
+    // Check if we're in fullscreen mode
+    const isInFullscreen = document.fullscreenElement || 
+                          document.webkitFullscreenElement || 
+                          document.mozFullScreenElement || 
+                          document.msFullscreenElement || 
+                          document.body.classList.contains('ios-fullscreen');
+    
+    // Update button icon
+    if (isInFullscreen) {
+        fullscreenButton.innerHTML = '⊡'; // Collapse icon when in fullscreen
+    } else {
+        fullscreenButton.innerHTML = '⛶'; // Expand icon when not in fullscreen
+    }
+}
+
+// Request fullscreen for mobile devices with enhanced iOS support
+function requestFullscreenMode() {
+    if (!isMobileDevice) return; // Only do this on mobile
+    
+    // Check if already in fullscreen mode
+    if (document.fullscreenElement || 
+        document.webkitFullscreenElement || 
+        document.mozFullScreenElement || 
+        document.msFullscreenElement || 
+        document.body.classList.contains('ios-fullscreen')) {
+        // Already in fullscreen, exit instead
+        exitFullscreenMode();
+        return;
+    }
+    
+    const gameContainer = document.querySelector('.game-container');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (isIOS) {
+        // iOS doesn't fully support standard fullscreen API
+        // Use a different approach for iOS devices
+        
+        // Add iOS specific fullscreen class
+        document.body.classList.add('ios-fullscreen');
+        document.body.classList.add('fullscreen-active');
+        document.documentElement.classList.add('fullscreen-active');
+        gameContainer.classList.add('fullscreen-active');
+        
+        // Scroll to top to ensure we're positioned properly
+        window.scrollTo(0, 0);
+        
+        // Handle iOS home indicator by adding padding
+        if (window.navigator.standalone) {
+            // App is running in standalone mode (added to home screen)
+            document.body.style.paddingBottom = 'env(safe-area-inset-bottom)';
+        }
+        
+        // Try to lock orientation on iOS if possible
+        if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+            window.screen.orientation.lock('landscape').catch(e => {
+                console.log('Could not lock screen orientation:', e);
+                // Show manual rotation message
+                checkOrientation();
+            });
+        } else {
+            // Can't lock orientation, show the orientation message
+            checkOrientation();
+        }
+        
+        // Force a resize to ensure proper dimensions
+        setTimeout(resizeCanvas, 100);
+        
+    } else {
+        // Standard fullscreen API for Android and other browsers
+        try {
+            // Set up aspect ratio before going fullscreen
+            if (gameContainer.requestFullscreen) {
+                gameContainer.requestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                }).catch(err => {
+                    console.log('Fullscreen request failed:', err);
+                    
+                    // Fallback approach - apply fullscreen-like styling
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                });
+            } else if (gameContainer.webkitRequestFullscreen) {
+                gameContainer.webkitRequestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                }).catch(err => {
+                    console.log('Webkit fullscreen request failed:', err);
+                    
+                    // Fallback approach
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                });
+            } else if (gameContainer.mozRequestFullScreen) {
+                gameContainer.mozRequestFullScreen().then(() => {
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                }).catch(err => {
+                    console.log('Mozilla fullscreen request failed:', err);
+                    
+                    // Fallback approach
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                });
+            } else if (gameContainer.msRequestFullscreen) {
+                gameContainer.msRequestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                }).catch(err => {
+                    console.log('MS fullscreen request failed:', err);
+                    
+                    // Fallback approach
+                    document.body.classList.add('fullscreen-active');
+                    document.documentElement.classList.add('fullscreen-active');
+                    gameContainer.classList.add('fullscreen-active');
+                    setTimeout(resizeCanvas, 100);
+                });
+            } else {
+                // No standard fullscreen support, use CSS-based approach
+                document.body.classList.add('fullscreen-active');
+                document.documentElement.classList.add('fullscreen-active');
+                gameContainer.classList.add('fullscreen-active');
+                setTimeout(resizeCanvas, 100);
+            }
+            
+            // Try to lock orientation
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => {
+                    console.log('Orientation lock failed:', err);
+                    checkOrientation();
+                });
+            } else {
+                checkOrientation();
+            }
+            
+        } catch (err) {
+            console.log('Fullscreen API error:', err);
+            
+            // Fallback to CSS-based fullscreen
+            document.body.classList.add('fullscreen-active');
+            document.documentElement.classList.add('fullscreen-active');
+            gameContainer.classList.add('fullscreen-active');
+            setTimeout(resizeCanvas, 100);
+        }
+    }
+    
+    // Make sure we respond to orientation changes
+    window.addEventListener('orientationchange', function() {
+        setTimeout(resizeCanvas, 300);
+    }, { once: false });
+    
+    // Force a game container resize after a delay
+    setTimeout(() => {
+        resizeCanvas();
+    }, 500);
+}
+
+// Exit fullscreen mode
+function exitFullscreenMode() {
+    const gameContainer = document.querySelector('.game-container');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    if (isIOS) {
+        // iOS doesn't fully support standard fullscreen API
+        document.body.classList.remove('ios-fullscreen');
+        document.body.classList.remove('fullscreen-active');
+        document.documentElement.classList.remove('fullscreen-active');
+        gameContainer.classList.remove('fullscreen-active');
+    } else {
+        try {
+            // Use standard exit fullscreen methods
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            
+            // Remove fullscreen classes
+            document.body.classList.remove('fullscreen-active');
+            document.documentElement.classList.remove('fullscreen-active');
+            gameContainer.classList.remove('fullscreen-active');
+            
+        } catch (err) {
+            console.log('Exit fullscreen error:', err);
+            
+            // Fallback - just remove the fullscreen classes
+            document.body.classList.remove('fullscreen-active');
+            document.documentElement.classList.remove('fullscreen-active');
+            gameContainer.classList.remove('fullscreen-active');
+        }
+    }
+    
+    // Force resize to update layout
+    setTimeout(resizeCanvas, 100);
+}
+
+// Check device orientation and show/hide message
+function checkOrientation() {
+    if (!isMobileDevice) return; // Only relevant on mobile
+    
+    const orientationMessage = document.querySelector('.orientation-message');
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
+    // Only show orientation message in portrait mode on the start screen
+    // Once the game is active, we handle portrait mode differently
+    if (isPortrait && !gameActive) {
+        orientationMessage.style.display = 'flex';
+    } else {
+        orientationMessage.style.display = 'none';
+    }
+}
+
+// Function to toggle portrait mode class
+function updateOrientationClass() {
+    const gameContainer = document.querySelector('.game-container');
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
+    if (isPortrait) {
+        gameContainer.classList.add('portrait-mode');
+        document.body.classList.add('portrait-mode');
+    } else {
+        gameContainer.classList.remove('portrait-mode');
+        document.body.classList.remove('portrait-mode');
+    }
+}
+
+// Document/window event listeners
+window.addEventListener('resize', function() {
+    updateOrientationClass();
+    resizeCanvas();
+    checkOrientation();
+});
+
+window.addEventListener('orientationchange', function() {
+    // Give a small delay for orientation to fully change
+    setTimeout(() => {
+        updateOrientationClass();
+        resizeCanvas();
+        checkOrientation();
+    }, 200);
+});
+
+// When we exit fullscreen, remove the fullscreen active class
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    const gameContainer = document.querySelector('.game-container');
+    
+    if (document.fullscreenElement || 
+        document.webkitFullscreenElement || 
+        document.mozFullScreenElement || 
+        document.msFullscreenElement) {
+        document.body.classList.add('fullscreen-active');
+        document.documentElement.classList.add('fullscreen-active');
+        gameContainer.classList.add('fullscreen-active');
+    } else {
+        document.body.classList.remove('fullscreen-active');
+        document.documentElement.classList.remove('fullscreen-active');
+        gameContainer.classList.remove('fullscreen-active');
+    }
+    
+    // Update fullscreen button icon
+    updateFullscreenButtonIcon();
+    
+    // Force resize to ensure proper rendering
+    setTimeout(resizeCanvas, 100);
+}
 
 function startGame() {
     gameActive = true;
@@ -45,13 +406,28 @@ function startGame() {
     lastTailgaterTime = Date.now();
     difficulty = 0; // Reset difficulty
     difficultyUpdateTime = Date.now(); // Initialize difficulty update time
+    
+    // Start with base speed - auto-acceleration will handle the rest
+    playerSpeed = 10; // Base speed
+    
+    // Update orientation class
+    updateOrientationClass();
+    
     // Ensure canvas is properly sized when game starts
     resizeCanvas();
-    // Start the game immediately
+    
+    // Request fullscreen mode on mobile
+    requestFullscreenMode();
+    
+    // Check orientation after a small delay to ensure all updates have processed
+    setTimeout(checkOrientation, 300);
 }
 
 function showHowToPlay() {
-    alert('Use arrow keys to drive. Avoid other cars. If you crash, you\'ll need to decide whether to call Mike Brown Law or handle it yourself!');
+    alert('CONTROLS:\n\n' + 
+          'DESKTOP: Use arrow keys (← →) to steer left/right. Up arrow (↑) to accelerate, Down arrow (↓) to brake.\n\n' +
+          'MOBILE: Tap buttons on screen to steer left/right. Auto-acceleration will gradually increase your speed.\n\n' + 
+          'Avoid other cars. If you crash, you\'ll need to decide whether to call Mike Brown Law or handle it yourself!');
 }
 
 function showDecisionScreen() {
@@ -190,22 +566,111 @@ createSkybox();
 const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 2000); // Initial aspect ratio will be updated
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
 
-// Function to handle responsive canvas
+// Function to handle responsive canvas with mobile optimizations and fullscreen support
 function resizeCanvas() {
     const canvas = renderer.domElement;
     const gameContainer = document.querySelector('.game-container');
     
-    // Get the computed dimensions of the container
-    const containerRect = gameContainer.getBoundingClientRect();
-    const containerWidth = containerRect.width;
-    const containerHeight = containerRect.height;
+    // Check if we're in fullscreen mode
+    const isInFullscreen = document.fullscreenElement || 
+                          document.webkitFullscreenElement || 
+                          document.mozFullScreenElement || 
+                          document.msFullscreenElement || 
+                          gameContainer.classList.contains('fullscreen-active');
     
-    // Update renderer size to match container
+    // Get container dimensions
+    let containerWidth, containerHeight;
+    
+    if (isInFullscreen) {
+        // Use window dimensions directly when in fullscreen
+        containerWidth = window.innerWidth;
+        containerHeight = window.innerHeight;
+        
+        // Account for safe areas on iOS
+        if (document.body.classList.contains('ios-fullscreen')) {
+            containerWidth -= (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-left') || 0) + 
+                             parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-right') || 0));
+            containerHeight -= (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top') || 0) + 
+                              parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom') || 0));
+        }
+    } else {
+        // Get the computed dimensions of the container when not fullscreen
+        const containerRect = gameContainer.getBoundingClientRect();
+        containerWidth = containerRect.width;
+        containerHeight = containerRect.height;
+    }
+    
+    // Set pixelRatio based on device for performance
+    if (isMobileDevice) {
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    } else {
+        renderer.setPixelRatio(window.devicePixelRatio);
+    }
+    
+    // Check if we're in portrait mode
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
+    // Apply styles directly to maximize canvas fill
+    if (isInFullscreen) {
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.objectFit = 'contain';
+    }
+    
+    // Update renderer size
     renderer.setSize(containerWidth, containerHeight, false);
     
     // Update camera aspect ratio
     camera.aspect = containerWidth / containerHeight;
-    camera.updateProjectionMatrix();
+    
+    // Adjust camera FOV and position based on orientation
+    if (isPortrait && isMobileDevice) {
+        // Portrait mode - wider FOV with landscape camera position
+        camera.fov = 85; // Wider FOV for portrait (restored from previous setting)
+        
+        // Only update player-following camera if game is active
+        if (gameActive && player) {
+            // Updated camera position with z at -6
+            camera.position.set(
+                player.position.x,
+                player.position.y + 2, // Same as landscape
+                player.position.z - 6  // Updated to -6 as requested
+            );
+        } else {
+            // Default camera positioning for menu screens in portrait
+            camera.position.set(0, 3, -6); // Match landscape default position
+        }
+        
+        // Update camera with new settings
+        camera.updateProjectionMatrix();
+        
+        // Hide orientation message if we're handling portrait mode
+        document.querySelector('.orientation-message').style.display = 'none';
+        
+    } else {
+        // Landscape mode - Normal FOV
+        const baseFOV = 75;
+        const aspectRatio = containerWidth / containerHeight;
+        
+        // Adjust FOV based on aspect ratio (increase for wider screens)
+        if (aspectRatio > 1.8) { // Very wide
+            camera.fov = baseFOV + 5;
+        } else if (aspectRatio < 1.2) { // Nearly square
+            camera.fov = baseFOV - 5; 
+        } else {
+            camera.fov = baseFOV;
+        }
+        
+        camera.updateProjectionMatrix();
+        
+        // In landscape fullscreen, ensure orientation message is hidden
+        if (isInFullscreen) {
+            document.querySelector('.orientation-message').style.display = 'none';
+        }
+    }
+    
+    // Force render to update view
+    renderer.render(scene, camera);
 }
 
 // Initial resize
@@ -1353,8 +1818,6 @@ const createParticleSystems = () => {
 const particles = createParticleSystems();
 
 // Controls
-const keys = { left: false, right: false, up: false, down: false };
-let playerSpeed = 0;
 let score = 0;
 let gameStartTime = 0;
 const hud = document.querySelector('.hud');
@@ -1364,9 +1827,14 @@ const timeDisplay = document.querySelector('.time');
 
 function updateHUD() {
     // Update speed with flashing at max speed
-    const speedMph = Math.round(playerSpeed * 3.95); // Convert to MPH (79 MPH at max speed of 20)
+    // Update MPH calculation to account for different max speeds
+    const speedMultiplier = isMobileDevice ? 3.6 : 3.95; // Adjust for different max speeds while keeping similar MPH values
+    const speedMph = Math.round(playerSpeed * speedMultiplier); // Convert to MPH
     speedDisplay.textContent = `SPEED: ${speedMph} MPH 🚗`;
-    if (playerSpeed >= 19) { // Near max speed
+    
+    // Flash when near max speed - adjusted for mobile vs desktop
+    const nearMaxSpeed = isMobileDevice ? 21 : 19; // Flash at slightly different thresholds
+    if (playerSpeed >= nearMaxSpeed) { // Near max speed
         speedDisplay.classList.add('flash');
     } else {
         speedDisplay.classList.remove('flash');
@@ -1561,11 +2029,37 @@ function animate(timestamp = 0) {
     if (keys.right) player.position.x -= laneChangeSpeed * delta;
     player.position.x = Math.max(-4, Math.min(4, player.position.x));
 
-    const acceleration = 10; // units per second squared
-    const maxSpeed = 20; // units per second
-    if (keys.up) playerSpeed += acceleration * delta;
-    if (keys.down) playerSpeed -= acceleration * delta;
-    playerSpeed = Math.max(0, Math.min(maxSpeed, playerSpeed));
+    // Auto-acceleration and manual control hybrid
+    // Set slightly different max speed for mobile to match the perceived faster speed
+    const maxSpeed = isMobileDevice ? 22 : 20; // Max units per second - higher for mobile
+    const baseSpeed = 10; // Base speed (minimum)
+    
+    // Keyboard acceleration/braking
+    const keyboardAcceleration = 10; // Units per second squared
+    if (keys.up) {
+        playerSpeed += keyboardAcceleration * delta;
+    } else if (keys.down) {
+        playerSpeed -= keyboardAcceleration * delta;
+    } else {
+        // Auto-acceleration when not using keyboard
+        // On mobile, accelerate faster to reach max speed within 8 seconds
+        // From base speed (10) to max speed (22) in 8 seconds = 12/8 = 1.5 units per second on mobile
+        let autoAccelRate = isMobileDevice ? 1.5 : 0.1; // Much faster acceleration on mobile
+        
+        if (playerSpeed < baseSpeed) {
+            // Quickly return to base speed if below it
+            playerSpeed += 5 * delta;
+        } else if (playerSpeed < maxSpeed) {
+            // Gradually increase speed above base speed
+            playerSpeed += autoAccelRate * delta;
+        }
+    }
+    
+    // Ensure speed stays within valid range
+    // Keep at least base speed unless braking is active
+    const minSpeed = keys.down ? 0 : baseSpeed;
+    playerSpeed = Math.max(minSpeed, Math.min(maxSpeed, playerSpeed));
+    
     player.position.z += playerSpeed * delta;
 
     // Animate player car wheels
@@ -1579,8 +2073,23 @@ function animate(timestamp = 0) {
         });
     }
 
-    // Camera follow
-    camera.position.set(player.position.x, player.position.y + 2, player.position.z - 5);
+    // Camera follow with orientation awareness
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (isPortrait && isMobileDevice) {
+        // Portrait mode - use same camera position as landscape
+        camera.position.set(
+            player.position.x,
+            player.position.y + 2, // Same as landscape
+            player.position.z - 6  // Updated to -6 as requested
+        );
+    } else {
+        // Landscape mode - normal follow camera
+        camera.position.set(
+            player.position.x,
+            player.position.y + 2,
+            player.position.z - 5
+        );
+    }
     camera.lookAt(player.position);
 
     // Traffic movement
@@ -1760,4 +2269,23 @@ camera.lookAt(0, 0, 0);
 // Initial render
 renderer.render(scene, camera);
 
+// Add mobile controls
+addMobileControls();
+
 animate();
+
+// Document ready handler
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize orientation message dismiss button
+    const dismissButton = document.querySelector('.orientation-message .dismiss-button');
+    if (dismissButton) {
+        dismissButton.addEventListener('click', function() {
+            document.querySelector('.orientation-message').style.display = 'none';
+        });
+    }
+    
+    // Initial orientation check
+    if (isMobileDevice) {
+        checkOrientation();
+    }
+});
